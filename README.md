@@ -2,249 +2,530 @@
 
 A reusable, harness-independent framework for AI-assisted software engineering.
 
-The framework defines common engineering standards, specialized AI roles, repeatable development workflows, and adapters for AI development tools.
+The objective is to improve engineering quality while reducing implementation time by giving AI coding tools a disciplined engineering process rather than treating them as autocomplete.
 
-The objective is not to maximize AI-generated code.
+## Core Model
 
-The objective is to improve engineering quality while reducing the time required to investigate, implement, test, and review software changes.
+The framework separates three different concerns:
 
-## Goals
+```text
+Engineering Framework
+        +
+Persistent Project Knowledge
+        +
+Active Task Context
+```
 
-This framework is designed to:
+### Engineering Framework
 
-- improve correctness of AI-assisted changes;
-- preserve intended business behavior;
-- reduce unnecessary code modifications;
-- require investigation before implementation;
-- improve test quality;
-- introduce independent review;
-- support legacy modernization and behavioral parity;
-- keep humans in control of consequential actions;
-- remain portable across AI development tools.
+Defines how AI should work.
 
-## Core Engineering Philosophy
+Stored in this private framework repository:
+
+```text
+standards/
+agents/
+workflows/
+```
+
+### Persistent Project Knowledge
+
+Defines how a specific application works.
+
+Stored with the application repository:
+
+```text
+.ai/
+```
+
+### Active Task Context
+
+Preserves investigation and implementation context across sessions and specialized agents.
+
+Stored with the application repository:
+
+```text
+.ai/tasks/
+```
+
+## Engineering Workflow
 
 For non-trivial work:
 
-**Understand → Investigate → Plan → Implement → Test → Review → Correct → Verify → Human Approval**
+```text
+Understand
+    ↓
+Investigate
+    ↓
+Plan
+    ↓
+Implement
+    ↓
+Test
+    ↓
+Review
+    ↓
+Correct
+    ↓
+Verify
+    ↓
+Human Approval
+```
 
-Implementation is not complete merely because code compiles.
-
-AI should have substantial freedom to analyze and work inside the development environment while maintaining strict boundaries around destructive or external actions.
+Legacy modernization adds explicit parity analysis before implementation.
 
 ## Repository Structure
 
 ```text
-ai-engineering-framework/
+ai-engineering/
+├── README.md
 ├── standards/
+│   ├── development.md
+│   ├── testing.md
+│   ├── review.md
+│   ├── security.md
+│   └── legacy-parity.md
 ├── agents/
+│   ├── orchestrator.md
+│   ├── planner.md
+│   ├── developer.md
+│   ├── tester.md
+│   ├── reviewer.md
+│   └── legacy-parity.md
 ├── workflows/
+│   ├── feature.md
+│   ├── bug-fix.md
+│   ├── migration.md
+│   └── code-review.md
+├── prompts/
+│   ├── investigate.md
+│   ├── test.md
+│   └── parity.md
 ├── adapters/
 │   ├── common/
 │   ├── copilot/
 │   ├── claude/
 │   └── cursor/
 └── scripts/
+    └── install.ps1
 ```
 
-### `standards/`
+## Source of Truth
 
-Contains harness-independent engineering rules.
+The canonical engineering definitions live in:
 
-Current standards cover:
+- `standards/`
+- `agents/`
+- `workflows/`
+- `prompts/`
 
-- development;
-- testing;
+These files are the source of truth.
+
+Harness-specific files such as GitHub Copilot agents and prompts are generated from these canonical definitions.
+
+The deployment flow is:
+
+Canonical Framework → `install.ps1` → Application Repository
+
+The application repository receives:
+
+- `.github/copilot-instructions.md`
+- `.github/agents/`
+- `.github/prompts/`
+
+Project-specific knowledge lives separately under `.ai/`.
+
+Do not manually maintain multiple copies of the same engineering instructions when they can be generated from a canonical source.
+
+## Standards
+
+`standards/` defines general engineering expectations.
+
+Examples:
+
+- implementation discipline;
+- testing quality;
 - code review;
 - security;
 - legacy parity.
 
-These files are the authoritative source for general engineering behavior.
+Standards should remain application-independent.
 
-### `agents/`
+## Agents
 
-Defines specialized engineering roles.
+`agents/` contains canonical specialized engineering roles.
 
-Current roles:
+### Orchestrator
 
-- Planner
-- Developer
-- Tester
-- Reviewer
-- Legacy Parity Analyst
-
-Agent definitions describe responsibilities and behavior independently of any particular AI vendor.
-
-### `workflows/`
-
-Defines repeatable engineering processes.
-
-Current workflows:
-
-- feature development;
-- bug fixing;
-- legacy modernization;
-- code review.
-
-Workflows coordinate the different engineering roles.
-
-### `adapters/`
-
-Contains integration templates for specific AI development harnesses.
-
-The adapter layer currently contains support templates for:
-
-- GitHub Copilot;
-- Claude;
-- Cursor.
-
-Adapters should remain relatively thin.
-
-General engineering behavior belongs in `standards/`, `agents/`, and `workflows/`.
-
-### `scripts/`
-
-Reserved for installation, synchronization, validation, and update tooling.
-
-The scripts layer will eventually allow the framework to be installed into application repositories without manually duplicating files.
-
-## Source of Truth
-
-The framework separates reusable engineering behavior from tool-specific integration.
-
-The source-of-truth hierarchy is:
-
-```text
-standards/
-agents/
-workflows/
-        ↓
-     adapters/
-        ↓
-application repository
-        ↓
-AI harness
-```
-
-Do not maintain independent copies of engineering policy for each AI vendor when the behavior can be represented in the shared framework.
-
-## Project-Specific Information
-
-This repository must remain generic.
-
-Do not place application-specific information here, such as:
-
-- application architecture;
-- database schema;
-- business rules;
-- customer information;
-- internal URLs;
-- credentials;
-- production configuration;
-- project-specific legacy behavior.
-
-That information belongs in the application repository.
-
-A project using this framework may contain files such as:
-
-```text
-AI.md
-
-.ai/
-├── project.md
-├── architecture.md
-├── business-rules.md
-├── database.md
-└── legacy.md
-```
-
-The reusable framework defines **how AI should engineer software**.
-
-The application repository defines **how that particular system works**.
-
-## Instruction Precedence
-
-When instructions conflict, apply the following order:
-
-1. Explicit human instruction for the current task
-2. Mandatory project-specific requirements
-3. Project architecture and business rules
-4. Shared AI engineering framework
-5. AI harness defaults
-
-Security and data-integrity safeguards must not be implicitly overridden.
-
-## Engineering Roles
+Coordinates non-trivial work and selects the appropriate workflow.
 
 ### Planner
 
-Investigates the requirement and affected system.
-
-Produces an implementation plan before production code is modified.
+Investigates requirements, execution flow, root cause, risks, and implementation strategy.
 
 ### Developer
 
-Implements an approved change using the smallest correct modification.
+Implements the smallest correct change.
 
 ### Tester
 
-Acts adversarially and attempts to expose defects and regressions.
+Performs adversarial verification.
 
 ### Reviewer
 
-Independently evaluates the implementation for correctness and risk.
+Independently evaluates correctness, risk, business behavior, architecture, security, and test quality.
 
 ### Legacy Parity Analyst
 
-Compares modern implementations against authoritative legacy behavior.
+Compares modern behavior against authoritative legacy behavior.
 
-## Harness Independence
+## Workflows
 
-The framework is intentionally vendor-independent.
+`workflows/` defines repeatable engineering processes.
 
-AI tools are consumers of the framework rather than owners of the engineering standards.
+### Feature
 
-Changing from one AI development tool to another should require changing an adapter rather than rewriting engineering policy.
+Used for non-trivial feature development.
+
+### Bug Fix
+
+Requires root-cause investigation and regression verification.
+
+### Migration
+
+Used when legacy behavior must be preserved or intentionally changed.
+
+### Code Review
+
+Used for independent review without initial implementation changes.
+
+## Specialist Prompts
+
+The `prompts/` directory contains reusable specialist operations that are not complete engineering workflows.
+
+### Investigate
+
+Canonical source:
+
+`prompts/investigate.md`
+
+Generated as `/investigate` for GitHub Copilot and executed using the Planner agent.
+
+Its purpose is to investigate a problem without modifying production code.
+
+### Test
+
+Canonical source:
+
+`prompts/test.md`
+
+Generated as `/test` for GitHub Copilot and executed using the Tester agent.
+
+Its purpose is to test an implementation adversarially.
+
+### Parity
+
+Canonical source:
+
+`prompts/parity.md`
+
+Generated as `/parity` for GitHub Copilot and executed using the Legacy Parity agent.
+
+Its purpose is to compare modern behavior against an authoritative legacy implementation.
+
+### Review
+
+There is intentionally no `prompts/review.md`.
+
+The canonical source for `/review` is:
+
+`workflows/code-review.md`
+
+This prevents duplicate review instructions and keeps a single source of truth.
+
+## Persistent Project Knowledge
+
+Application-specific engineering knowledge belongs inside the application repository under:
+
+```text
+.ai/
+├── README.md
+├── project.md
+├── architecture.md
+├── business-rules/
+├── components/
+├── database/
+├── integrations/
+├── legacy/
+├── decisions/
+└── tasks/
+```
+
+This knowledge should not be stored in the generic framework repository.
+
+Examples of application-specific information include:
+
+- business rules;
+- database tables;
+- service architecture;
+- integration behavior;
+- legacy implementation details;
+- accepted engineering decisions;
+- project terminology.
+
+## Project Knowledge Principles
+
+Project documentation provides useful engineering context but is not automatically authoritative.
+
+When documentation conflicts with:
+
+- source code;
+- executable tests;
+- database constraints;
+- integration contracts;
+- observed runtime behavior;
+
+the discrepancy should be investigated and reported.
+
+Do not silently choose whichever source is more convenient.
+
+## Durable Knowledge
+
+Examples of durable project knowledge include:
+
+- confirmed business rules;
+- architectural constraints;
+- persistence rules;
+- integration contracts;
+- intentional legacy differences;
+- accepted engineering decisions;
+- concurrency requirements.
+
+Durable knowledge belongs in the appropriate `.ai/` document.
+
+## Active Task Context
+
+Significant work may maintain a document under:
+
+```text
+.ai/tasks/
+```
+
+Task documents preserve working context across:
+
+- days;
+- AI conversations;
+- agents;
+- investigation;
+- implementation;
+- testing;
+- review.
+
+Task documents may contain:
+
+- requirement;
+- confirmed evidence;
+- hypotheses;
+- root cause;
+- plan;
+- implementation status;
+- test results;
+- review findings;
+- unresolved questions;
+- next steps.
+
+Task documents are working context and are not automatically authoritative business documentation.
+
+## Knowledge Maintenance
+
+At the end of significant work, determine whether durable project knowledge was discovered or changed.
+
+Confirmed durable knowledge should be added to the appropriate `.ai/` document.
+
+Do not promote:
+
+- speculation;
+- temporary debugging observations;
+- failed hypotheses;
+- incomplete conclusions
+
+into permanent project documentation.
+
+## Harness Adapters
+
+Adapters translate the canonical framework into formats understood by specific AI tools.
+
+Supported design targets include:
+
+```text
+GitHub Copilot
+Claude
+Cursor
+```
+
+GitHub Copilot is currently the primary implementation target.
+
+## GitHub Copilot Deployment
+
+The installer generates Copilot-native files inside an application repository.
+
+Example:
+
+```text
+.github/
+├── copilot-instructions.md
+├── agents/
+│   ├── orchestrator.agent.md
+│   ├── planner.agent.md
+│   ├── developer.agent.md
+│   ├── tester.agent.md
+│   ├── reviewer.agent.md
+│   └── legacy-parity.agent.md
+│
+└── prompts/
+    ├── feature.prompt.md
+    ├── bug-fix.prompt.md
+    ├── migration.prompt.md
+    ├── investigate.prompt.md
+    ├── test.prompt.md
+    ├── review.prompt.md
+    └── parity.prompt.md
+```
+
+## Installation and Framework Updates
+
+The framework uses a single deployment script:
+
+`scripts/install.ps1`
+
+A separate `update.ps1` is intentionally not required.
+
+The same installer is used for both initial installation and future framework synchronization.
+
+### First Installation
+
+Preview the installation first:
+
+    .\scripts\install.ps1 `
+        -TargetRepo "C:\path\to\application" `
+        -DryRun
+
+Then install:
+
+    .\scripts\install.ps1 `
+        -TargetRepo "C:\path\to\application"
+
+Do not use `-Force` for a normal first installation.
+
+### Updating an Application After Framework Changes
+
+When the canonical framework changes, for example:
+
+- an agent changes;
+- a standard changes;
+- a workflow changes;
+- a specialist prompt changes;
+- generation logic changes;
+
+preview the update with:
+
+    .\scripts\install.ps1 `
+        -TargetRepo "C:\path\to\application" `
+        -DryRun `
+        -Force
+
+After reviewing the intended changes, apply them with:
+
+    .\scripts\install.ps1 `
+        -TargetRepo "C:\path\to\application" `
+        -Force
+
+Therefore the normal update workflow is:
+
+Framework change → `-DryRun -Force` → Review → `-Force` → Review Git diff
+
+### What `-Force` Means
+
+`-Force` authorizes the installer to replace framework-generated files that already exist in the target repository.
+
+Framework-owned files include:
+
+- `.github/copilot-instructions.md`
+- `.github/agents/*`
+- `.github/prompts/*`
+- `.ai/framework-manifest.json`
+
+Project-specific knowledge is protected from `-Force`.
+
+The application owns:
+
+- `.ai/README.md`
+- `.ai/project.md`
+- `.ai/architecture.md`
+- `.ai/business-rules/*`
+- `.ai/components/*`
+- `.ai/database/*`
+- `.ai/integrations/*`
+- `.ai/legacy/*`
+- `.ai/decisions/*`
+- `.ai/tasks/*`
+
+The installer must not overwrite these project-owned knowledge files merely because `-Force` was supplied.
+
+### When Not to Run the Installer
+
+Changes made only to application-specific `.ai/` knowledge do not require running `install.ps1`.
+
+For example, changing:
+
+`.ai/business-rules/shipping-import.md`
+
+or:
+
+`.ai/tasks/settlements-not-created.md`
+
+does not require reinstalling the framework.
+
+Run `install.ps1` when deploying or synchronizing changes from the shared AI Engineering Framework.
+
+## Security
+
+Do not store secrets in framework or project-knowledge documentation.
+
+Examples include:
+
+- passwords;
+- API keys;
+- access tokens;
+- private certificates;
+- production credentials;
+- secret connection strings.
 
 ## Human Control
 
 AI may assist with:
 
 - repository investigation;
-- implementation planning;
-- code modification;
-- test creation;
+- planning;
+- implementation;
 - builds;
-- test execution;
-- static analysis;
-- code review.
+- tests;
+- code review;
+- parity analysis.
 
-Consequential actions should remain explicitly controlled.
+Consequential operations require explicit human authorization.
 
 Examples include:
 
-- production changes;
+- production deployment;
 - destructive database operations;
-- schema migrations;
-- pushing commits;
-- merging pull requests;
-- deployment;
-- infrastructure changes.
-
-## Future Automation
-
-The `scripts/` directory will provide commands for installing and updating the framework in application repositories.
-
-The intended workflow is approximately:
-
-```powershell
-.\scripts\install.ps1 C:\Source\MyApplication
-```
-
-The installer will generate or synchronize the appropriate harness-specific files while preserving project-specific configuration.
+- pushing or merging changes;
+- production infrastructure changes;
+- unrelated dependency upgrades;
+- consequential CI/CD modifications.
 
 ## Design Principle
 
-The framework should make AI behave more like a disciplined engineering team and less like an autocomplete system.
+The framework should make AI behave like a disciplined engineering team.
 
-**Correctness and evidence are more important than the amount of code generated.**
+Correctness and evidence are more important than the amount of generated code.

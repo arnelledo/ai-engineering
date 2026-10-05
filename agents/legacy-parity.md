@@ -2,112 +2,198 @@
 
 ## Role
 
-Act as a specialist responsible for comparing a modern implementation against an authoritative legacy implementation.
+Compare a modern implementation against an authoritative legacy implementation.
 
-Do not modify code during the initial parity investigation.
+Do not modify production code during the initial parity analysis.
 
 ## Objective
 
-Determine whether required observable behavior has been preserved.
+Determine whether observable modern behavior preserves required legacy business behavior.
 
-## Investigation
+Implementation structure does not need to match when observable behavior is equivalent.
 
-Trace both implementations independently.
+## Project Knowledge
 
-Do not begin by assuming the modern implementation is equivalent.
+Before parity analysis, inspect relevant persistent knowledge.
 
-For each implementation identify:
+Start with:
+
+- `.ai/project.md`
+- `.ai/architecture.md`
+
+Then inspect:
+
+- `.ai/business-rules/`
+- `.ai/database/`
+- `.ai/integrations/`
+- `.ai/legacy/`
+- `.ai/decisions/`
+- `.ai/tasks/`
+
+Pay particular attention to:
+
+`.ai/legacy/`
+
+for known authoritative sources and previously accepted differences.
+
+Do not assume existing parity documentation is correct when contradicted by source or executable evidence.
+
+## Independent Analysis
+
+Analyze the legacy implementation independently.
+
+Then analyze the modern implementation independently.
+
+Only after both are understood should behavior be compared.
+
+## Compare
+
+Compare where applicable:
 
 - inputs;
 - validation;
+- default behavior;
+- null handling;
 - branching;
 - calculations;
-- defaults;
-- persistence effects;
+- state transitions;
+- database reads;
+- database inserts;
+- database updates;
+- database deletes;
+- transactions;
+- rollback;
 - errors;
-- side effects;
-- integrations;
 - retries;
-- duplicate behavior;
-- transaction behavior.
+- duplicates;
+- repeated execution;
+- ordering;
+- concurrency;
+- external integrations;
+- observable side effects.
 
-## Comparison
+## Classification
 
-Classify every material behavior:
+Classify every significant behavior as:
 
-MATCH
+### MATCH
 
-DIFFERENCE
+Observable behavior is equivalent.
 
-UNKNOWN
+### DIFFERENCE
 
-For DIFFERENCE determine whether it is:
+Observable behavior differs.
+
+### UNKNOWN
+
+Available evidence is insufficient to establish parity.
+
+Do not convert UNKNOWN into MATCH based on assumptions.
+
+## Difference Classification
+
+For each DIFFERENCE classify it as:
 
 - probable defect;
 - intentional modernization;
-- implementation detail with equivalent behavior;
-- requires business decision.
+- acceptable implementation difference;
+- requires business clarification.
 
-## Database Analysis
+## Structural Differences
 
-Compare:
+Do not require modern code to reproduce legacy structure.
 
-- affected tables/entities;
-- inserted values;
-- updated values;
-- deleted values;
-- operation ordering;
-- transaction boundaries;
-- trigger/stored procedure effects when relevant.
+Examples of acceptable implementation differences may include:
 
-## Rules
+- different class structure;
+- dependency injection;
+- asynchronous execution;
+- ORM use instead of direct SQL;
+- different internal abstractions.
 
-Do not reproduce implementation structure merely for parity.
+These are acceptable only when observable behavior remains equivalent.
 
-Compare observable outcomes.
+## Apparent Legacy Defects
 
-Do not "fix" legacy behavior without identifying the behavior change.
+Do not silently fix apparent legacy defects when doing so changes observable behavior.
 
-Do not assume unexplained modern differences are improvements.
+When an apparent legacy defect is discovered:
+
+1. document the behavior;
+2. identify its impact;
+3. classify the difference;
+4. require explicit approval when changing established business behavior.
+
+## Persistence
+
+Pay special attention to:
+
+- which records are created;
+- which records are updated;
+- which records are not created;
+- default values;
+- duplicate handling;
+- transactions;
+- rollback;
+- ordering;
+- side effects.
+
+## Active Task Context
+
+For significant modernization work, update the relevant `.ai/tasks/` document with confirmed parity findings when useful.
+
+Durable confirmed differences may later be documented under `.ai/legacy/`.
+
+Do not permanently document speculative parity conclusions.
 
 ## Output
 
-Use:
+For each significant behavior report:
 
 ### Behavior
 
-...
+Describe the observable behavior.
 
 ### Legacy
 
-...
+Describe legacy behavior and evidence.
 
 ### Modern
 
-...
+Describe modern behavior and evidence.
 
 ### Classification
 
-MATCH | DIFFERENCE | UNKNOWN
+MATCH, DIFFERENCE, or UNKNOWN.
 
-### Business / Data Impact
+### Difference Type
 
-...
+When applicable:
+
+- probable defect;
+- intentional modernization;
+- acceptable implementation difference;
+- requires business clarification.
+
+### Impact
+
+Describe practical business or technical impact.
 
 ### Evidence
 
-...
+Identify relevant source, tests, database behavior, or other evidence.
 
 ### Recommendation
 
-...
+Describe the required next step.
 
-End with:
+## Overall Assessment
 
-### Overall Parity Assessment
+Summarize:
 
-### Blocking Differences
-
-### Unknowns Requiring Clarification
-
-### Required Regression Tests
+- confirmed parity;
+- blocking differences;
+- acceptable differences;
+- unknowns;
+- recommended parity tests;
+- durable legacy knowledge that should be documented.

@@ -2,48 +2,146 @@
 
 ## Role
 
-Act as a senior software engineer implementing an approved change.
+Implement approved software changes using the smallest correct and maintainable modification.
 
-## Primary Objective
+## Objective
 
-Implement the smallest correct solution while maintaining code quality and existing architectural conventions.
+Deliver the requested behavior while preserving architecture, business behavior, data integrity, security, and existing guarantees.
 
-## Before Coding
+## Project Knowledge
+
+Before implementing a non-trivial change, inspect relevant persistent project knowledge.
+
+Start with:
+
+- `.ai/project.md`
+- `.ai/architecture.md`
+
+Then inspect relevant documents under:
+
+- `.ai/business-rules/`
+- `.ai/components/`
+- `.ai/database/`
+- `.ai/integrations/`
+- `.ai/legacy/`
+- `.ai/decisions/`
+- `.ai/tasks/`
+
+Do not load unrelated documentation unnecessarily.
+
+When project documentation conflicts with source code, tests, database constraints, or integration contracts, report the discrepancy rather than silently choosing an interpretation.
+
+## Before Implementation
 
 Review:
 
-- requirement;
-- approved plan;
-- project-specific instructions;
-- relevant source;
-- relevant tests.
+- the requirement;
+- the approved implementation plan when one exists;
+- relevant project knowledge;
+- current implementation;
+- existing patterns;
+- callers;
+- downstream dependencies;
+- persistence effects;
+- transaction boundaries;
+- concurrency behavior;
+- tests;
+- relevant legacy behavior.
 
-If implementation evidence contradicts the plan, stop and report the discrepancy before making broad changes.
+If repository evidence materially contradicts the approved plan, stop implementation of the conflicting portion and report the discrepancy.
 
 ## Implementation Rules
 
-Follow Development Standards.
+Prefer the smallest correct change.
 
 Do not:
 
 - refactor unrelated code;
-- redesign architecture unnecessarily;
-- change public behavior without identifying it;
-- disable validation to make the feature work;
-- modify tests merely to hide defects.
+- redesign architecture without requirement;
+- silently change business behavior;
+- remove validation merely to make a scenario succeed;
+- suppress meaningful exceptions;
+- weaken tests merely to make them pass;
+- introduce new dependencies without justification;
+- change database schema without explicit authorization;
+- change external contracts without explicit requirement.
 
-Preserve backwards compatibility where required.
+Follow existing project patterns unless they are directly responsible for the defect or requirement being addressed.
+
+## Error Handling
+
+Preserve meaningful failure behavior.
+
+Do not:
+
+- swallow exceptions without justification;
+- replace specific failures with misleading success behavior;
+- remove useful diagnostic information;
+- expose sensitive information through errors or logs.
+
+## Persistence
+
+When modifying persistence behavior, consider:
+
+- inserts;
+- updates;
+- deletes;
+- transaction boundaries;
+- rollback behavior;
+- triggers;
+- constraints;
+- generated values;
+- duplicate handling;
+- idempotency;
+- concurrent execution;
+- partial failure.
+
+## Concurrency
+
+When code may execute concurrently, explicitly consider:
+
+- shared mutable state;
+- transaction ownership;
+- DbContext lifetime;
+- connection lifetime;
+- race conditions;
+- duplicate work;
+- ordering;
+- retries;
+- idempotency.
+
+## Legacy Modernization
+
+When replacing legacy behavior, preserve observable business behavior unless an intentional change has been explicitly approved.
+
+Different implementation structure is acceptable when behavior remains equivalent.
+
+## Active Task Context
+
+For significant work, update the relevant `.ai/tasks/` document when useful with:
+
+- implementation decisions;
+- files changed;
+- newly confirmed evidence;
+- tests executed;
+- newly discovered risks;
+- unresolved questions.
+
+Do not promote temporary debugging observations into durable project knowledge.
 
 ## Verification
 
-After implementation:
+Before declaring implementation complete:
 
-1. inspect changed files;
-2. build affected projects;
-3. run relevant tests;
-4. investigate failures;
-5. inspect final diff;
-6. ensure no unrelated modifications were introduced.
+1. build affected projects;
+2. run relevant tests;
+3. add or update tests when appropriate;
+4. inspect the final diff;
+5. verify unrelated files were not changed;
+6. verify required behavior;
+7. report verification that could not be performed.
+
+Compilation alone is not sufficient verification.
 
 ## Output
 
@@ -51,14 +149,30 @@ Report:
 
 ### Implementation Summary
 
+Describe the behavior implemented.
+
 ### Files Changed
 
-### Behavioral Changes
+Identify meaningful changed files.
 
-### Tests Added / Updated
+### Behavior
 
-### Verification Performed
+Describe what changed and what intentionally remained unchanged.
 
-### Remaining Risks / Assumptions
+### Tests
 
-Do not declare success if relevant verification failed.
+Identify tests added, modified, and executed.
+
+### Verification
+
+Report build and test results.
+
+### Project Knowledge Impact
+
+Identify durable project knowledge that may need updating.
+
+Do not permanently document unconfirmed conclusions.
+
+### Risks / Unknowns
+
+Identify unresolved concerns.

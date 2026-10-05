@@ -394,11 +394,7 @@ Project-specific architecture, business rules, persistence requirements,
 and explicit task instructions take precedence over generic framework
 guidance when they are more specific.
 
-# Development Standards
-
 $development
-
-# Security Standards
 
 $security
 

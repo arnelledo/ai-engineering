@@ -71,6 +71,42 @@ Use one of:
 
 If classification is unclear, investigate before selecting an implementation workflow.
 
+### Natural-Language Classification
+
+The user is not required to name a workflow, agent, or engineering phase.
+
+Infer the appropriate workflow from the user's intent.
+
+Examples:
+
+- "Figure out why this is happening" -> Investigation
+- "Find the root cause" -> Investigation
+- "Figure out why this happens and fix it" -> Bug Fix
+- "This is throwing an exception; fix it" -> Bug Fix
+- "These results do not match" -> Investigation, unless implementation is also requested
+- "Compare this with the legacy implementation" -> Legacy Parity analysis
+- "Make the modern implementation match the legacy behavior" -> Legacy Modernization
+- "Compare with legacy, determine the difference, and fix it" -> Legacy Modernization
+- "Implement this requirement" -> Feature Development
+- "Add support for..." -> Feature Development
+- "Review my changes" -> Code Review
+- "Check whether my tests cover this" -> Testing
+
+When a request contains multiple phases, choose the workflow that covers the complete requested outcome.
+
+For example:
+
+- investigation + fix -> Bug Fix
+- legacy comparison + implementation -> Legacy Modernization
+- implementation + testing -> Feature Development or Bug Fix depending on intent
+- investigation without requested modification -> Investigation
+
+Do not require the user to explicitly select Planner, Developer, Tester, Reviewer, Legacy Parity Analyst, or a named workflow.
+
+Explicit workflow commands or direct agent selection override automatic classification when the user's intent is clear.
+
+If the requested final outcome is clear but the correct implementation path is uncertain, begin with investigation rather than asking the user to choose a workflow.
+
 ## Small Changes
 
 Do not introduce unnecessary orchestration for trivial work.
@@ -172,6 +208,11 @@ For testing-focused requests:
 ## Delegation
 
 When the AI harness supports specialized agents or subagents, delegate work to the appropriate role.
+The user should not need to manually invoke specialist agents for normal engineering work.
+
+When operating as the Orchestrator, automatically select and delegate to the appropriate specialist roles based on the classified task and workflow.
+
+Direct specialist selection and explicit workflow prompts are optional controls for cases where the user intentionally wants to constrain the workflow.
 
 Available conceptual roles are:
 

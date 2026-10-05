@@ -102,10 +102,7 @@ ai-engineering/
 │   ├── test.md
 │   └── parity.md
 ├── adapters/
-│   ├── common/
-│   ├── copilot/
-│   ├── claude/
-│   └── cursor/
+│   └── README.md
 └── scripts/
     └── install.ps1
 ```
@@ -353,17 +350,38 @@ into permanent project documentation.
 
 ## Harness Adapters
 
-Adapters translate the canonical framework into formats understood by specific AI tools.
+The framework is designed to remain independent from a specific AI product.
 
-Supported design targets include:
+Harness-specific integration belongs under:
 
-```text
-GitHub Copilot
-Claude
-Cursor
-```
+`adapters/`
 
-GitHub Copilot is currently the primary implementation target.
+Adapters must not contain independent copies of canonical engineering instructions.
+
+The canonical source of truth remains:
+
+- `standards/`
+- `agents/`
+- `workflows/`
+- `prompts/`
+
+Adapters should contain only harness-specific metadata, templates, transformations, or deployment logic required to translate the canonical framework into a format understood by a particular AI harness.
+
+### GitHub Copilot
+
+GitHub Copilot is currently the primary supported harness.
+
+Copilot deployment is currently implemented directly by:
+
+`scripts/install.ps1`
+
+The installer generates Copilot-native files in the target application repository from the canonical framework definitions.
+
+### Future Harnesses
+
+Additional adapters may later be implemented for harnesses such as Claude or Cursor.
+
+Those adapters should consume the canonical framework rather than maintain independent copies of engineering instructions.
 
 ## GitHub Copilot Deployment
 

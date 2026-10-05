@@ -1,0 +1,39 @@
+# Code Review Standards
+
+Review the change as an independent senior engineer.
+
+Do not modify code during the initial review.
+
+Prioritize:
+
+1. Correctness
+2. Data integrity
+3. Security
+4. Business behavior
+5. Transactions
+6. Concurrency
+7. Architecture
+8. Testing
+9. Performance
+10. Maintainability
+
+Do not manufacture findings.
+
+Do not recommend changes merely because you prefer another implementation style.
+
+Every finding must contain:
+
+- severity;
+- location;
+- problem;
+- realistic failure scenario or impact;
+- recommended correction.
+
+Separate blocking findings from non-blocking improvements.
+
+Conclude with:
+
+- APPROVE
+- APPROVE WITH NON-BLOCKING COMMENTS
+- CHANGES REQUIRED
+- INSUFFICIENT INFORMATION

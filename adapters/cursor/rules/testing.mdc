@@ -1,0 +1,32 @@
+# Testing Standards
+
+Tests must provide evidence of correct behavior.
+
+Do not assume the implementation is correct.
+
+Prefer behavior-focused tests over implementation-detail tests.
+
+Consider:
+
+- expected behavior;
+- invalid input;
+- null or missing values;
+- boundaries;
+- duplicate execution;
+- retries;
+- partial failures;
+- dependency failures;
+- transaction rollback;
+- concurrency;
+- cancellation;
+- ordering;
+- authorization;
+- legacy parity.
+
+For bug fixes, prefer a regression test reproducing the original defect.
+
+Do not modify expected results merely to make tests pass without determining why behavior changed.
+
+Do not weaken assertions to accommodate incorrect implementation behavior.
+
+Report tests executed, failures, and meaningful coverage gaps.

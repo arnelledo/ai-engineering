@@ -1,238 +1,119 @@
-\# Code Review Standards
+# Code Review Standards
 
-
-
-\## Purpose
-
-
+## Purpose
 
 Code review exists to identify meaningful risk before changes are accepted.
 
-
-
 Do not manufacture findings to appear thorough.
-
-
 
 Do not recommend changes solely because another implementation style is preferred.
 
+## Review Priorities
 
-
-\## Review Priorities
-
-
-
-\### Critical
-
-
+### Critical
 
 Issues that may cause:
 
+- data corruption;
+- serious security vulnerabilities;
+- incorrect financial/business behavior;
+- destructive operations;
+- major race conditions;
+- severe transaction failures.
 
-
-\- data corruption;
-
-\- serious security vulnerabilities;
-
-\- incorrect financial/business behavior;
-
-\- destructive operations;
-
-\- major race conditions;
-
-\- severe transaction failures.
-
-
-
-\### High
-
-
+### High
 
 Issues such as:
 
+- incorrect business logic;
+- significant regression risk;
+- missing authorization;
+- broken transaction behavior;
+- incorrect persistence behavior;
+- architecture violations with real consequences;
+- important legacy parity differences.
 
-
-\- incorrect business logic;
-
-\- significant regression risk;
-
-\- missing authorization;
-
-\- broken transaction behavior;
-
-\- incorrect persistence behavior;
-
-\- architecture violations with real consequences;
-
-\- important legacy parity differences.
-
-
-
-\### Medium
-
-
+### Medium
 
 Issues such as:
 
+- insufficient error handling;
+- meaningful performance problems;
+- missing important tests;
+- maintainability problems likely to cause defects.
 
-
-\- insufficient error handling;
-
-\- meaningful performance problems;
-
-\- missing important tests;
-
-\- maintainability problems likely to cause defects.
-
-
-
-\### Low
-
-
+### Low
 
 Issues such as:
 
-
-
-\- naming;
-
-\- readability;
-
-\- minor duplication;
-
-\- style inconsistencies.
-
-
+- naming;
+- readability;
+- minor duplication;
+- style inconsistencies.
 
 Avoid reporting purely cosmetic issues unless specifically requested.
 
-
-
-\## Review Method
-
-
+## Review Method
 
 Review the change in context.
 
-
-
 Inspect:
 
-
-
-\- requirement;
-
-\- changed code;
-
-\- callers;
-
-\- tests;
-
-\- persistence effects;
-
-\- error paths;
-
-\- relevant existing implementation.
-
-
+- requirement;
+- changed code;
+- callers;
+- tests;
+- persistence effects;
+- error paths;
+- relevant existing implementation.
 
 Review the final diff, not only individual files.
 
-
-
-\## Required Finding Format
-
-
+## Required Finding Format
 
 Every finding should include:
 
+**Severity**
 
+**Location**
 
-\*\*Severity\*\*
+**Problem**
 
+**Failure Scenario / Impact**
 
+**Recommended Correction**
 
-\*\*Location\*\*
-
-
-
-\*\*Problem\*\*
-
-
-
-\*\*Failure Scenario / Impact\*\*
-
-
-
-\*\*Recommended Correction\*\*
-
-
-
-\## Evidence
-
-
+## Evidence
 
 Do not present speculation as a defect.
 
-
-
 If evidence is insufficient, classify the observation as a question or risk.
 
-
-
-\## Scope
-
-
+## Scope
 
 Identify unrelated changes.
 
-
-
 Flag unnecessary refactoring when it increases review or regression risk.
 
-
-
-\## Tests
-
-
+## Tests
 
 Determine whether tests prove the requested behavior.
 
-
-
 Check for missing:
 
+- regression scenarios;
+- negative cases;
+- persistence validation;
+- duplicate/retry behavior;
+- concurrency scenarios when applicable.
 
-
-\- regression scenarios;
-
-\- negative cases;
-
-\- persistence validation;
-
-\- duplicate/retry behavior;
-
-\- concurrency scenarios when applicable.
-
-
-
-\## Review Outcome
-
-
+## Review Outcome
 
 Conclude with one of:
 
-
-
-\- APPROVE
-
-\- APPROVE WITH NON-BLOCKING COMMENTS
-
-\- CHANGES REQUIRED
-
-\- INSUFFICIENT INFORMATION
-
-
+- APPROVE
+- APPROVE WITH NON-BLOCKING COMMENTS
+- CHANGES REQUIRED
+- INSUFFICIENT INFORMATION
 
 Explain blocking findings separately from optional improvements.
-

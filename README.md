@@ -491,6 +491,56 @@ Example:
     └── project.instructions.md   (project-owned, created once)
 ```
 
+### Requirements
+
+- VS Code with the GitHub Copilot Chat extension, kept on the current stable release.
+  - Custom agents in `.github/agents/*.agent.md` require VS Code 1.106 or later.
+  - Subagent delegation (the `agent` tool and the `agents` property) and the prompt-file `agent` field are newer features. Keep VS Code and Copilot Chat up to date.
+  - Older releases used `.chatmode.md` files and a `mode:` field. The installer does not generate those formats.
+- Windows PowerShell 5.1 or PowerShell 7 to run the installer.
+- Git, recommended. The installer uses it to verify the repository root and to record the framework commit.
+
+### Where Each Generated File Works
+
+| File | VS Code | Copilot coding agent on GitHub.com |
+|---|---|---|
+| `.github/copilot-instructions.md` | Yes | Yes |
+| `.github/instructions/*.instructions.md` | Yes | Yes |
+| `.github/agents/*.agent.md` | Yes | Yes; `argument-hint` and `handoffs` are ignored |
+| `.github/prompts/*.prompt.md` | Yes | No |
+
+The slash commands (`/feature`, `/bug-fix`, `/review`, and so on) are VS Code features. On GitHub.com, select the custom agent (for example, the Orchestrator) and describe the task instead.
+
+Each prompt and agent declares an `argument-hint`, shown in the VS Code chat input, describing what to type after the command.
+
+### Copilot Coding Agent Setup
+
+The installer does not create `.github/workflows/copilot-setup-steps.yml`. The build and test environment depends on each application's stack, and the file is a CI workflow, so it is added per repository by the team.
+
+Without it, the Copilot coding agent on GitHub.com may be unable to build or run tests, and the agents will report verification as not performed.
+
+To add it, create `.github/workflows/copilot-setup-steps.yml` with a single job named `copilot-setup-steps`. For example, for a .NET application:
+
+```yaml
+name: Copilot Setup Steps
+
+on: workflow_dispatch
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet restore
+```
+
+See GitHub's documentation on customizing the coding agent environment for the full set of options.
+
 ## Installation and Framework Updates
 
 The framework uses a single deployment script:

@@ -28,7 +28,7 @@ Then analyze the modern implementation independently.
 
 Only after both are understood should behavior be compared.
 
-## Parity Standards
+## Applicable Standards
 
 Apply the Legacy Parity Standards (appended to this agent). They define:
 

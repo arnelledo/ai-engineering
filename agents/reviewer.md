@@ -16,7 +16,7 @@ Apply the Project Knowledge Standards (appended to this agent) for non-trivial r
 
 Use project knowledge to evaluate whether the change violates known business or architectural constraints.
 
-## Review Standards
+## Applicable Standards
 
 Apply the Code Review Standards (appended to this agent). They define:
 

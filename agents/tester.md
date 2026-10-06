@@ -34,7 +34,7 @@ Inspect:
 
 Test observable behavior rather than copying implementation details into assertions.
 
-## Testing Standards
+## Applicable Standards
 
 Apply the Testing Standards (appended to this agent). They define:
 

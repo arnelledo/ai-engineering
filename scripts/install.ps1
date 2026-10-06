@@ -570,34 +570,40 @@ $SpecialistAgentNames = @(
 $AgentMetadata = [ordered]@{
     "orchestrator" = @{
         Description = "Coordinates non-trivial engineering work across planning, implementation, testing, review, and legacy parity analysis."
+        ArgumentHint = "Describe the task, defect, or requirement"
         Tools = @("read", "search", "edit", "execute", "agent", "todo")
         Agents = $SpecialistAgentNames
     }
 
     "planner" = @{
         Description = "Investigates software changes and produces implementation plans without modifying production code."
+        ArgumentHint = "Describe the change or problem to plan"
         Tools = @("read", "search", "web")
     }
 
     "developer" = @{
         Description = "Implements approved software changes using minimal, correct, maintainable modifications."
+        ArgumentHint = "Describe the approved change or point to the plan"
         Tools = @("read", "search", "edit", "execute", "todo")
     }
 
     "tester" = @{
         Description = "Performs adversarial test analysis and creates tests designed to expose defects and regressions."
+        ArgumentHint = "Name the change or behavior to test"
         Tools = @("read", "search", "edit", "execute", "todo")
         Standards = @("testing.md")
     }
 
     "reviewer" = @{
         Description = "Independently reviews software changes for correctness, risk, architecture, security, and test quality."
+        ArgumentHint = "Describe the change to review, or the requirement it should satisfy"
         Tools = @("read", "search")
         Standards = @("review.md")
     }
 
     "legacy-parity" = @{
         Description = "Compares modern implementations against authoritative legacy behavior and identifies parity differences."
+        ArgumentHint = "Name the behavior to compare against the legacy implementation"
         Tools = @("read", "search")
         Standards = @("legacy-parity.md")
     }
@@ -619,6 +625,18 @@ function Get-AgentStandards {
     $standards += $SharedAgentStandards
 
     return $standards
+}
+
+function ConvertTo-YamlDoubleQuoted {
+    # YAML double-quoted scalar with backslash and double-quote escaped.
+
+    param([string]$Value)
+
+    if ($Value -match "[`r`n]") {
+        throw "Frontmatter values must be single-line: $Value"
+    }
+
+    return '"' + ($Value.Replace('\', '\\').Replace('"', '\"')) + '"'
 }
 
 function ConvertTo-YamlInlineList {
@@ -651,9 +669,14 @@ function New-AgentContent {
 
     $frontmatter = @(
         "---",
-        "description: `"$($metadata.Description)`"",
-        "tools: $(ConvertTo-YamlInlineList $metadata.Tools)"
+        "description: $(ConvertTo-YamlDoubleQuoted $metadata.Description)"
     )
+
+    if ($metadata.ContainsKey("ArgumentHint")) {
+        $frontmatter += "argument-hint: $(ConvertTo-YamlDoubleQuoted $metadata.ArgumentHint)"
+    }
+
+    $frontmatter += "tools: $(ConvertTo-YamlInlineList $metadata.Tools)"
 
     if ($metadata.ContainsKey("Agents")) {
 
@@ -683,41 +706,49 @@ $PromptMetadata = @{
     "feature" = @{
         Description = "Implement a non-trivial feature using the framework feature-development workflow."
         Agent = "orchestrator"
+        ArgumentHint = "Describe the feature or requirement to implement"
     }
 
     "bug-fix" = @{
         Description = "Investigate and fix a defect using root-cause analysis, regression testing, implementation, and review."
         Agent = "orchestrator"
+        ArgumentHint = "Describe the defect: observed vs expected behavior, errors, reproduction steps"
     }
 
     "migration" = @{
         Description = "Modernize legacy behavior while explicitly verifying behavioral parity."
         Agent = "orchestrator"
+        ArgumentHint = "Name the legacy behavior to modernize and where the legacy source is"
     }
 
     "code-review" = @{
         Description = "Perform an independent engineering review of the current change."
         Agent = "reviewer"
+        ArgumentHint = "Optional: the requirement or plan the change should satisfy"
     }
 
     "investigate" = @{
         Description = "Investigate a software problem without modifying production code."
         Agent = "planner"
+        ArgumentHint = "Describe the problem or question to investigate"
     }
 
     "test" = @{
         Description = "Perform adversarial testing of the current implementation."
         Agent = "tester"
+        ArgumentHint = "Name the change, component, or behavior to test"
     }
 
     "parity" = @{
         Description = "Compare modern behavior against an authoritative legacy implementation."
         Agent = "legacy-parity"
+        ArgumentHint = "Name the behavior to compare and the legacy and modern locations"
     }
 
     "bootstrap-knowledge" = @{
         Description = "Bootstrap persistent project knowledge from repository evidence."
         Agent = "orchestrator"
+        ArgumentHint = "Optional: areas of the repository to focus on"
     }
 }
 
@@ -733,14 +764,64 @@ function New-PromptContent {
 
     $metadata = $PromptMetadata[$PromptName]
 
-    return @"
----
-description: "$($metadata.Description)"
-agent: "$($metadata.Agent)"
----
+    if (-not $AgentMetadata.Contains($metadata.Agent)) {
+        throw "Prompt '$PromptName' targets unknown agent '$($metadata.Agent)'."
+    }
 
-$Body
-"@
+    $frontmatter = @(
+        "---",
+        "description: $(ConvertTo-YamlDoubleQuoted $metadata.Description)"
+    )
+
+    if ($metadata.ContainsKey("ArgumentHint")) {
+        $frontmatter += "argument-hint: $(ConvertTo-YamlDoubleQuoted $metadata.ArgumentHint)"
+    }
+
+    $frontmatter += "agent: $(ConvertTo-YamlDoubleQuoted $metadata.Agent)"
+    $frontmatter += "---"
+
+    return ($frontmatter -join "`n") + "`n`n" + $Body
+}
+
+# ===========================================================================
+# Markdown composition
+# ===========================================================================
+
+function Step-MarkdownHeadingLevel {
+    # Demotes every Markdown heading by one level (# -> ##), outside fenced
+    # code blocks. Used when a standard is embedded under another document's
+    # top-level heading, so each generated file has a single H1.
+
+    param([string]$Markdown)
+
+    $inFence = $false
+    $lines = ($Markdown -replace "`r`n", "`n") -split "`n"
+
+    $result = foreach ($line in $lines) {
+
+        if ($line -match '^\s*(```|~~~)') {
+            $inFence = -not $inFence
+            $line
+            continue
+        }
+
+        if (-not $inFence -and $line -match '^#{1,5} ') {
+            "#" + $line
+        }
+        else {
+            $line
+        }
+    }
+
+    return ($result -join "`n")
+}
+
+function Get-EmbeddedStandard {
+    param([string]$StandardFile)
+
+    $text = (Read-TextFile (Join-Path $StandardsRoot $StandardFile)).Trim()
+
+    return Step-MarkdownHeadingLevel $text
 }
 
 # ===========================================================================
@@ -761,7 +842,7 @@ $CopilotInstructionStandards = @(
 function New-CopilotInstructions {
 
     $sections = foreach ($standard in $CopilotInstructionStandards) {
-        (Read-TextFile (Join-Path $StandardsRoot $standard)).Trim()
+        Get-EmbeddedStandard $standard
     }
 
     $header = @"
@@ -1344,7 +1425,7 @@ function Install-Agents {
         $parts = @((Read-TextFile $sourcePath).Trim())
 
         foreach ($standard in (Get-AgentStandards $agentName)) {
-            $parts += (Read-TextFile (Join-Path $StandardsRoot $standard)).Trim()
+            $parts += Get-EmbeddedStandard $standard
         }
 
         $body = $parts -join "`n`n"

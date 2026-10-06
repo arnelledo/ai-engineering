@@ -1,50 +1,17 @@
 # Legacy Parity Analysis
 
-Compare the modern implementation against the authoritative legacy implementation.
+Compare the modern implementation against the authoritative legacy implementation for the requested behavior.
 
-Before comparison, inspect relevant project knowledge under:
+Do not modify code.
 
-- `.ai/business-rules/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
+Before comparison, identify:
+
+- the authoritative legacy implementation;
+- the modern implementation being compared;
+- relevant project knowledge, especially under `.ai/legacy/`, `.ai/business-rules/`, and `.ai/database/`.
 
 Analyze both implementations independently before comparing them.
 
-Compare:
+Apply the Legacy Parity Standards: compare the behaviors they list, classify each significant behavior as MATCH, DIFFERENCE, or UNKNOWN, and classify each DIFFERENCE using the defined difference types.
 
-- inputs;
-- validation;
-- default behavior;
-- null handling;
-- branching;
-- calculations;
-- database reads and writes;
-- transaction behavior;
-- errors;
-- retries;
-- duplicates;
-- ordering;
-- external integrations;
-- observable side effects.
-
-Classify each behavior as:
-
-- MATCH
-- DIFFERENCE
-- UNKNOWN
-
-For DIFFERENCE, classify it as:
-
-- probable defect;
-- intentional modernization;
-- acceptable implementation difference;
-- requires business clarification.
-
-Do not require structural similarity when observable behavior is equivalent.
-
-Do not silently correct apparent legacy defects when doing so would change observable behavior.
-
-Report evidence for each significant conclusion and identify durable legacy knowledge that should be documented.
+Report each significant behavior using the Parity Report format, then finish with the Overall Assessment.

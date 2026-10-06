@@ -550,6 +550,14 @@ function Remove-StaleGeneratedFiles {
 #
 # Only the orchestrator receives the agent tool. Its Agents list must
 # match the agent file names (the default agent name in Copilot).
+#
+# Standards lists the role-specific canonical standards appended to the
+# agent. Every agent also receives $SharedAgentStandards. Agent files
+# refer to these appended standards instead of repeating their content.
+
+$SharedAgentStandards = @(
+    "project-knowledge.md"
+)
 
 $SpecialistAgentNames = @(
     "planner",
@@ -579,17 +587,38 @@ $AgentMetadata = [ordered]@{
     "tester" = @{
         Description = "Performs adversarial test analysis and creates tests designed to expose defects and regressions."
         Tools = @("read", "search", "edit", "execute", "todo")
+        Standards = @("testing.md")
     }
 
     "reviewer" = @{
         Description = "Independently reviews software changes for correctness, risk, architecture, security, and test quality."
         Tools = @("read", "search")
+        Standards = @("review.md")
     }
 
     "legacy-parity" = @{
         Description = "Compares modern implementations against authoritative legacy behavior and identifies parity differences."
         Tools = @("read", "search")
+        Standards = @("legacy-parity.md")
     }
+}
+
+function Get-AgentStandards {
+    # Role-specific standards first (they are what the agent body refers
+    # to most), then the shared standards.
+
+    param([string]$AgentName)
+
+    $metadata = $AgentMetadata[$AgentName]
+    $standards = @()
+
+    if ($metadata.ContainsKey("Standards")) {
+        $standards += $metadata.Standards
+    }
+
+    $standards += $SharedAgentStandards
+
+    return $standards
 }
 
 function ConvertTo-YamlInlineList {
@@ -1300,12 +1329,11 @@ function Install-Agents {
 
     Write-Step "Generating Copilot custom agents"
 
-    # Every agent receives the canonical project-knowledge standard.
-    # Delegated subagents start with their own context and may not receive
-    # the repository-wide instructions, so each agent must be
-    # self-contained. The text is maintained once, in standards/.
-
-    $sharedStandard = (Read-TextFile (Join-Path $StandardsRoot "project-knowledge.md")).Trim()
+    # Each agent receives its role-specific standards and the shared
+    # standards, appended to its role definition. Delegated subagents start
+    # with their own context and may not receive the repository-wide
+    # instructions, so each agent must be self-contained. The text is
+    # maintained once, in standards/.
 
     foreach ($agentName in $AgentMetadata.Keys) {
 
@@ -1313,9 +1341,13 @@ function Install-Agents {
             $AgentsRoot `
             "$agentName.md"
 
-        $agentBody = (Read-TextFile $sourcePath).Trim()
+        $parts = @((Read-TextFile $sourcePath).Trim())
 
-        $body = $agentBody + "`n`n" + $sharedStandard
+        foreach ($standard in (Get-AgentStandards $agentName)) {
+            $parts += (Read-TextFile (Join-Path $StandardsRoot $standard)).Trim()
+        }
+
+        $body = $parts -join "`n`n"
 
         $content = New-AgentContent `
             -AgentName $agentName `
@@ -1575,6 +1607,39 @@ $requiredFiles = @(
     (Join-Path $PromptsRoot "parity.md"),
     (Join-Path $PromptsRoot "bootstrap-knowledge.md")
 )
+
+# Every standard referenced by the agents or the repository-wide
+# instructions must exist.
+
+foreach ($agentName in $AgentMetadata.Keys) {
+    foreach ($standard in (Get-AgentStandards $agentName)) {
+        $requiredFiles += (Join-Path $StandardsRoot $standard)
+    }
+}
+
+foreach ($standard in $CopilotInstructionStandards) {
+    $requiredFiles += (Join-Path $StandardsRoot $standard)
+}
+
+# Every canonical standard must be delivered somewhere. A standard that no
+# agent and no instruction file uses would silently never reach the
+# target repository.
+
+$deliveredStandards = @($CopilotInstructionStandards)
+
+foreach ($agentName in $AgentMetadata.Keys) {
+    $deliveredStandards += Get-AgentStandards $agentName
+}
+
+$undeliveredStandards = @(
+    Get-ChildItem -LiteralPath $StandardsRoot -Filter "*.md" -File |
+        Where-Object { $deliveredStandards -notcontains $_.Name } |
+        ForEach-Object { $_.Name }
+)
+
+if ($undeliveredStandards.Count -gt 0) {
+    throw "These standards are not delivered to any agent or instruction file: $($undeliveredStandards -join ', '). Add them to `$CopilotInstructionStandards or an agent's Standards list in install.ps1."
+}
 
 foreach ($file in $requiredFiles) {
 

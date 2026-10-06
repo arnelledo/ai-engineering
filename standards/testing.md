@@ -38,18 +38,20 @@ Where applicable, evaluate:
 - expected/happy path;
 - invalid input;
 - null or missing values;
-- empty collections;
-- boundary values;
-- duplicate requests;
+- empty values and empty collections;
+- minimum and maximum boundary values;
+- duplicate input and duplicate requests;
 - repeated execution;
-- partial failures;
-- downstream failures;
-- transaction rollback;
 - retries;
+- partial failures;
+- downstream and database failures;
+- transaction rollback;
 - concurrency;
 - cancellation;
+- ordering;
 - authorization;
-- legacy compatibility.
+- legacy compatibility;
+- unexpected but valid input combinations.
 
 ## Regression Tests
 
@@ -58,7 +60,22 @@ Bug fixes should normally include a regression test that:
 1. fails against the defective behavior;
 2. passes after the correction.
 
+The test should prove the behavior that was defective, not merely exercise the modified method.
+
 When this is impractical, explain why.
+
+## Persistence Testing
+
+When persistence is involved, verify where applicable:
+
+- correct records are created;
+- correct records are updated;
+- incorrect records are not created;
+- rollback occurs when required;
+- duplicates are handled correctly;
+- repeated execution produces expected results;
+- transaction boundaries behave correctly;
+- side effects match business behavior.
 
 ## Legacy Modernization
 
@@ -78,11 +95,16 @@ Include important:
 
 ## Test Quality
 
-Avoid tests that simply reproduce the implementation.
+Do not:
 
-Avoid assertions that do not meaningfully prove behavior.
+- weaken existing assertions to make tests pass;
+- blindly update expected values;
+- create tests that merely repeat implementation logic;
+- use assertions that do not meaningfully prove behavior;
+- excessively mock behavior that should be verified;
+- treat compilation as testing.
 
-Avoid excessive mocking when a lightweight real implementation provides better confidence.
+Prefer a lightweight real implementation over a mock when it provides better confidence.
 
 Mocks should represent realistic dependency behavior.
 

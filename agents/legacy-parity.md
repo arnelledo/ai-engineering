@@ -28,97 +28,21 @@ Then analyze the modern implementation independently.
 
 Only after both are understood should behavior be compared.
 
-## Compare
+## Parity Standards
 
-Compare where applicable:
+Apply the Legacy Parity Standards (appended to this agent). They define:
 
-- inputs;
-- validation;
-- default behavior;
-- null handling;
-- branching;
-- calculations;
-- state transitions;
-- database reads;
-- database inserts;
-- database updates;
-- database deletes;
-- transactions;
-- rollback;
-- errors;
-- retries;
-- duplicates;
-- repeated execution;
-- ordering;
-- concurrency;
-- external integrations;
-- observable side effects.
+- how to determine the authoritative legacy source;
+- the behaviors to compare;
+- the MATCH / DIFFERENCE / UNKNOWN classification;
+- the difference types;
+- acceptable implementation differences;
+- handling of apparent legacy defects and unknown behavior;
+- the parity report format.
 
-## Classification
+Use the classifications and difference types exactly as defined.
 
-Classify every significant behavior as:
-
-### MATCH
-
-Observable behavior is equivalent.
-
-### DIFFERENCE
-
-Observable behavior differs.
-
-### UNKNOWN
-
-Available evidence is insufficient to establish parity.
-
-Do not convert UNKNOWN into MATCH based on assumptions.
-
-## Difference Classification
-
-For each DIFFERENCE classify it as:
-
-- probable defect;
-- intentional modernization;
-- acceptable implementation difference;
-- requires business clarification.
-
-## Structural Differences
-
-Do not require modern code to reproduce legacy structure.
-
-Examples of acceptable implementation differences may include:
-
-- different class structure;
-- dependency injection;
-- asynchronous execution;
-- ORM use instead of direct SQL;
-- different internal abstractions.
-
-These are acceptable only when observable behavior remains equivalent.
-
-## Apparent Legacy Defects
-
-Do not silently fix apparent legacy defects when doing so changes observable behavior.
-
-When an apparent legacy defect is discovered:
-
-1. document the behavior;
-2. identify its impact;
-3. classify the difference;
-4. require explicit approval when changing established business behavior.
-
-## Persistence
-
-Pay special attention to:
-
-- which records are created;
-- which records are updated;
-- which records are not created;
-- default values;
-- duplicate handling;
-- transactions;
-- rollback;
-- ordering;
-- side effects.
+Pay particular attention to persistence effects: records created, updated, and not created; default values; duplicates; transactions; rollback; ordering; and side effects.
 
 ## Active Task Context
 
@@ -132,44 +56,7 @@ Do not permanently document speculative parity conclusions.
 
 ## Output
 
-For each significant behavior report:
-
-### Behavior
-
-Describe the observable behavior.
-
-### Legacy
-
-Describe legacy behavior and evidence.
-
-### Modern
-
-Describe modern behavior and evidence.
-
-### Classification
-
-MATCH, DIFFERENCE, or UNKNOWN.
-
-### Difference Type
-
-When applicable:
-
-- probable defect;
-- intentional modernization;
-- acceptable implementation difference;
-- requires business clarification.
-
-### Impact
-
-Describe practical business or technical impact.
-
-### Evidence
-
-Identify relevant source, tests, database behavior, or other evidence.
-
-### Recommendation
-
-Describe the required next step.
+Report each significant behavior using the Parity Report format in the Legacy Parity Standards.
 
 ## Overall Assessment
 

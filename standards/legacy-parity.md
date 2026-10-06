@@ -24,18 +24,30 @@ Inspect actual:
 
 ## Comparison Model
 
-For each relevant behavior classify it as:
+Classify every significant behavior as exactly one of:
 
-- MATCH
-- DIFFERENCE
-- UNKNOWN
+### MATCH
 
-For differences classify further as:
+Observable behavior is equivalent.
 
-- DEFECT
-- INTENTIONAL MODERNIZATION
-- ACCEPTABLE IMPLEMENTATION DIFFERENCE
-- REQUIRES BUSINESS CLARIFICATION
+### DIFFERENCE
+
+Observable behavior differs.
+
+### UNKNOWN
+
+Available evidence is insufficient to establish parity.
+
+Do not convert UNKNOWN into MATCH based on assumptions.
+
+### Difference Types
+
+Classify each DIFFERENCE further as exactly one of:
+
+- PROBABLE DEFECT;
+- INTENTIONAL MODERNIZATION;
+- ACCEPTABLE IMPLEMENTATION DIFFERENCE;
+- REQUIRES BUSINESS CLARIFICATION.
 
 ## Compare
 
@@ -45,6 +57,7 @@ Evaluate:
 
 - required values;
 - optional values;
+- validation;
 - defaults;
 - null handling;
 - malformed values.
@@ -61,7 +74,7 @@ Evaluate:
 
 - calculations;
 - validation;
-- status changes;
+- status changes and state transitions;
 - eligibility;
 - conditional operations.
 
@@ -71,9 +84,12 @@ Evaluate:
 - inserts;
 - updates;
 - deletes;
+- records that are not created;
+- default values;
 - affected tables;
 - ordering;
-- transaction boundaries.
+- transaction boundaries;
+- rollback.
 
 ### Failure Behavior
 
@@ -86,9 +102,16 @@ Evaluate:
 ### Operational Behavior
 
 - duplicate processing;
+- repeated execution;
 - idempotency;
 - concurrency;
 - retries.
+
+### Integrations
+
+- external system calls;
+- messages published or consumed;
+- other observable side effects.
 
 ## Implementation Differences
 
@@ -96,7 +119,15 @@ The modern implementation does not need to reproduce legacy code structure.
 
 It must reproduce required observable behavior.
 
-A different implementation is acceptable when:
+Examples of acceptable structural differences include:
+
+- different class structure;
+- dependency injection;
+- asynchronous execution;
+- ORM use instead of direct SQL;
+- different internal abstractions.
+
+A different implementation is acceptable only when:
 
 - business outcomes match;
 - persistence effects match where required;
@@ -107,6 +138,8 @@ A different implementation is acceptable when:
 
 Do not automatically reproduce an apparent legacy defect.
 
+Do not silently fix an apparent legacy defect when doing so changes observable behavior.
+
 Document:
 
 - legacy behavior;
@@ -114,7 +147,7 @@ Document:
 - modern behavior;
 - business impact.
 
-Require explicit confirmation when fixing the defect would change observable behavior.
+Classify the difference and require explicit approval when fixing the defect would change established business behavior.
 
 ## Unknown Behavior
 
@@ -124,28 +157,36 @@ Mark unresolved behavior as UNKNOWN and identify what evidence is needed.
 
 ## Parity Report
 
-Use:
+For each significant behavior report:
 
-### Legacy Behavior
+### Behavior
 
-...
+Describe the observable behavior.
 
-### Modern Behavior
+### Legacy
 
-...
+Describe legacy behavior and evidence.
+
+### Modern
+
+Describe modern behavior and evidence.
 
 ### Classification
 
-MATCH | DIFFERENCE | UNKNOWN
+MATCH, DIFFERENCE, or UNKNOWN.
+
+### Difference Type
+
+For a DIFFERENCE: PROBABLE DEFECT, INTENTIONAL MODERNIZATION, ACCEPTABLE IMPLEMENTATION DIFFERENCE, or REQUIRES BUSINESS CLARIFICATION.
 
 ### Impact
 
-...
+Describe practical business or technical impact.
 
 ### Evidence
 
-...
+Identify relevant source, tests, database behavior, or other evidence.
 
 ### Recommended Action
 
-...
+Describe the required next step.

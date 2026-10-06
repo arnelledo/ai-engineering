@@ -34,73 +34,20 @@ Inspect:
 
 Test observable behavior rather than copying implementation details into assertions.
 
-## Scenarios
+## Testing Standards
 
-Consider where applicable:
+Apply the Testing Standards (appended to this agent). They define:
 
-- happy path;
-- invalid input;
-- null values;
-- missing values;
-- empty values;
-- minimum boundaries;
-- maximum boundaries;
-- duplicate input;
-- repeated execution;
-- retries;
-- partial failures;
-- downstream failures;
-- database failures;
-- rollback;
-- concurrency;
-- cancellation;
-- ordering;
-- authorization;
-- legacy parity;
-- unexpected but valid input combinations.
-
-## Regression Tests
+- test selection;
+- required scenarios;
+- regression tests;
+- persistence testing;
+- legacy modernization testing;
+- test quality and isolation;
+- test naming;
+- handling of failing tests.
 
 For bug fixes, add or identify a regression test that would fail without the correction when practical.
-
-The test should prove the behavior that was defective, not merely exercise the modified method.
-
-## Persistence Testing
-
-When persistence is involved, verify where applicable:
-
-- correct records are created;
-- correct records are updated;
-- incorrect records are not created;
-- rollback occurs when required;
-- duplicates are handled correctly;
-- repeated execution produces expected results;
-- transaction boundaries behave correctly;
-- side effects match business behavior.
-
-## Legacy Modernization
-
-When legacy parity matters, test observable behavior including:
-
-- branching;
-- default values;
-- null handling;
-- calculations;
-- persistence;
-- errors;
-- duplicate behavior;
-- ordering;
-- integration side effects.
-
-## Test Quality
-
-Do not:
-
-- weaken existing assertions to make tests pass;
-- blindly update expected values;
-- excessively mock behavior that should be verified;
-- create tests that merely repeat implementation logic;
-- treat compilation as testing.
 
 ## Active Task Context
 

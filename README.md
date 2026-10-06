@@ -149,7 +149,18 @@ All engineering instruction text lives in the canonical directories. `install.ps
 3. `standards/project-knowledge.md`
 4. `standards/human-control.md`
 
-Every generated agent also receives `standards/project-knowledge.md`, appended to its role definition. Delegated subagents start with their own context and may not receive the repository-wide instructions, so each agent must be self-contained. Agent files therefore contain only role-specific guidance and refer to the appended standard instead of repeating it.
+Role-specific standards are appended to the agents that need them, together with `standards/project-knowledge.md`, which every agent receives:
+
+| Agent | Appended standards |
+|---|---|
+| `tester` | `testing.md`, `project-knowledge.md` |
+| `reviewer` | `review.md`, `project-knowledge.md` |
+| `legacy-parity` | `legacy-parity.md`, `project-knowledge.md` |
+| `orchestrator`, `planner`, `developer` | `project-knowledge.md` |
+
+Delegated subagents start with their own context and may not receive the repository-wide instructions, so each agent must be self-contained. Agent files therefore contain only role-specific guidance and refer to the appended standards instead of repeating them. Severity levels, finding format, review verdicts, test scenarios, and parity classifications are defined only in `standards/`.
+
+The installer refuses to run if a file in `standards/` is not delivered to any agent or to `copilot-instructions.md`. When adding a standard, add it to `$CopilotInstructionStandards` or to an agent's `Standards` list in `scripts/install.ps1`.
 
 Do not manually maintain multiple copies of the same engineering instructions when they can be generated from a canonical source.
 

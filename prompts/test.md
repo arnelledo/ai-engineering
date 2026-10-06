@@ -6,29 +6,11 @@ Do not assume the implementation is correct.
 
 Inspect relevant persistent project knowledge before testing non-trivial behavior.
 
-Consider where applicable:
-
-- happy path;
-- invalid input;
-- null and missing values;
-- empty values;
-- boundary conditions;
-- duplicate input;
-- repeated execution;
-- retries;
-- partial failures;
-- dependency failures;
-- database side effects;
-- transaction rollback;
-- concurrency;
-- cancellation;
-- ordering;
-- authorization;
-- legacy parity.
+Apply the Testing Standards: evaluate the required scenarios that apply to this change, and do not weaken existing assertions merely to make tests pass.
 
 For a bug fix, create or identify a regression test that would fail without the correction when practical.
 
-Do not weaken existing assertions merely to make tests pass.
+Run the relevant tests when possible.
 
 Report:
 

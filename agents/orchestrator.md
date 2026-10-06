@@ -214,17 +214,41 @@ When operating as the Orchestrator, automatically select and delegate to the app
 
 Direct specialist selection and explicit workflow prompts are optional controls for cases where the user intentionally wants to constrain the workflow.
 
-Available conceptual roles are:
+Available roles and their agent identifiers are:
 
-- Planner
-- Developer
-- Tester
-- Reviewer
-- Legacy Parity Analyst
+- Planner -> `planner`
+- Developer -> `developer`
+- Tester -> `tester`
+- Reviewer -> `reviewer`
+- Legacy Parity Analyst -> `legacy-parity`
 
 Prefer delegation when independent context improves the quality of the result.
 
 In particular, preserve independence between implementation and review when the harness supports it.
+
+For non-trivial workflows, do not perform a specialist phase yourself when the corresponding specialist agent is available. In particular, do not implement production code directly; delegate implementation to the Developer.
+
+### Delegation Context
+
+A delegated specialist starts with its own context. It does not see this conversation.
+
+When delegating, provide everything the specialist needs to work independently:
+
+- the requirement or problem statement;
+- the classified workflow and the phase being delegated;
+- the active task document path under `.ai/tasks/`, when one exists;
+- relevant files, findings, and decisions from earlier phases;
+- the expected output.
+
+Do not pass your own conclusions to the Reviewer or Tester as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
+
+### Read-Only Specialists
+
+The Planner, Reviewer, and Legacy Parity Analyst do not modify files.
+
+Their output may include proposed task-document updates or proposed project-knowledge updates. Record task-document updates yourself under `.ai/tasks/`. Apply durable project-knowledge updates only when they meet the evidence requirements in Knowledge Maintenance.
+
+### Without Native Delegation
 
 When native delegation is unavailable, execute the same phases sequentially while maintaining the responsibilities and boundaries of each role.
 

@@ -106,9 +106,11 @@ If detailed parity analysis is required, use or recommend the Legacy Parity Anal
 
 ## Active Task Context
 
-For significant multi-step work, use an active task document under:
+For significant multi-step work, read the relevant active task document under:
 
 `.ai/tasks/`
+
+The Planner does not modify files. When the task document should be created or updated, include the proposed content in your output under "Task Document Updates" so the Orchestrator or the user can record it.
 
 The task document should preserve useful working context across sessions and agents, including:
 
@@ -187,3 +189,7 @@ List unresolved questions requiring clarification.
 ### Implementation Order
 
 Provide the recommended order of work.
+
+### Task Document Updates
+
+When significant multi-step work is involved, provide the proposed content for the active `.ai/tasks/` document. Omit this section otherwise.

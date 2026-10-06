@@ -260,30 +260,77 @@ function Write-ScaffoldFile {
 # Copilot agent metadata
 # ===========================================================================
 
-$AgentMetadata = @{
+# Tools use the cross-platform tool-set aliases understood by both
+# VS Code and the Copilot coding agent on GitHub.com:
+#
+#   read    - read file contents
+#   search  - search files, text, usages, and workspace changes
+#   edit    - create and modify files
+#   execute - run terminal commands (builds, tests, git)
+#   agent   - invoke other custom agents as subagents
+#   web     - fetch URLs / web search
+#   todo    - manage a task list
+#
+# Unrecognized tool names are ignored by both harnesses.
+#
+# Read-only roles (planner, reviewer, legacy-parity) deliberately receive
+# no edit or execute tools, so "do not modify code" is enforced by the
+# harness rather than by instructions alone.
+#
+# Only the orchestrator receives the agent tool. Its Agents list must
+# match the agent file names (the default agent name in Copilot).
+
+$SpecialistAgentNames = @(
+    "planner",
+    "developer",
+    "tester",
+    "reviewer",
+    "legacy-parity"
+)
+
+$AgentMetadata = [ordered]@{
     "orchestrator" = @{
         Description = "Coordinates non-trivial engineering work across planning, implementation, testing, review, and legacy parity analysis."
+        Tools = @("read", "search", "edit", "execute", "agent", "todo")
+        Agents = $SpecialistAgentNames
     }
 
     "planner" = @{
         Description = "Investigates software changes and produces implementation plans without modifying production code."
+        Tools = @("read", "search", "web")
     }
 
     "developer" = @{
         Description = "Implements approved software changes using minimal, correct, maintainable modifications."
+        Tools = @("read", "search", "edit", "execute", "todo")
     }
 
     "tester" = @{
         Description = "Performs adversarial test analysis and creates tests designed to expose defects and regressions."
+        Tools = @("read", "search", "edit", "execute", "todo")
     }
 
     "reviewer" = @{
         Description = "Independently reviews software changes for correctness, risk, architecture, security, and test quality."
+        Tools = @("read", "search")
     }
 
     "legacy-parity" = @{
         Description = "Compares modern implementations against authoritative legacy behavior and identifies parity differences."
+        Tools = @("read", "search")
     }
+}
+
+function ConvertTo-YamlInlineList {
+    param([string[]]$Items)
+
+    if (-not $Items -or $Items.Count -eq 0) {
+        return "[]"
+    }
+
+    $quoted = $Items | ForEach-Object { "'" + ($_ -replace "'", "''") + "'" }
+
+    return "[" + ($quoted -join ", ") + "]"
 }
 
 function New-AgentContent {
@@ -292,19 +339,40 @@ function New-AgentContent {
         [string]$Body
     )
 
-    if (-not $AgentMetadata.ContainsKey($AgentName)) {
+    if (-not $AgentMetadata.Contains($AgentName)) {
         throw "No Copilot metadata configured for agent '$AgentName'."
     }
 
-    $description = $AgentMetadata[$AgentName].Description
+    $metadata = $AgentMetadata[$AgentName]
 
-    return @"
----
-description: "$description"
----
+    if (-not $metadata.ContainsKey("Tools") -or $metadata.Tools.Count -eq 0) {
+        throw "No Copilot tools configured for agent '$AgentName'. Every agent must declare an explicit tool list."
+    }
 
-$Body
-"@
+    $frontmatter = @(
+        "---",
+        "description: `"$($metadata.Description)`"",
+        "tools: $(ConvertTo-YamlInlineList $metadata.Tools)"
+    )
+
+    if ($metadata.ContainsKey("Agents")) {
+
+        if ($metadata.Tools -notcontains "agent") {
+            throw "Agent '$AgentName' declares subagents but does not include the 'agent' tool."
+        }
+
+        foreach ($subagent in $metadata.Agents) {
+            if (-not $AgentMetadata.Contains($subagent)) {
+                throw "Agent '$AgentName' references unknown subagent '$subagent'."
+            }
+        }
+
+        $frontmatter += "agents: $(ConvertTo-YamlInlineList $metadata.Agents)"
+    }
+
+    $frontmatter += "---"
+
+    return ($frontmatter -join "`n") + "`n`n" + $Body
 }
 
 # ===========================================================================
@@ -1027,16 +1095,7 @@ function Install-Agents {
 
     Write-Step "Generating Copilot custom agents"
 
-    $agentNames = @(
-        "orchestrator",
-        "planner",
-        "developer",
-        "tester",
-        "reviewer",
-        "legacy-parity"
-    )
-
-    foreach ($agentName in $agentNames) {
+    foreach ($agentName in $AgentMetadata.Keys) {
 
         $sourcePath = Join-Path `
             $AgentsRoot `

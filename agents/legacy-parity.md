@@ -140,7 +140,9 @@ Pay special attention to:
 
 ## Active Task Context
 
-For significant modernization work, update the relevant `.ai/tasks/` document with confirmed parity findings when useful.
+For significant modernization work, read the relevant `.ai/tasks/` document when one exists.
+
+The Legacy Parity Analyst does not modify files. When confirmed parity findings should be recorded, include them in your output under "Task Document Updates" so the Orchestrator or the user can record them.
 
 Durable confirmed differences may later be documented under `.ai/legacy/`.
 
@@ -196,4 +198,5 @@ Summarize:
 - acceptable differences;
 - unknowns;
 - recommended parity tests;
-- durable legacy knowledge that should be documented.
+- durable legacy knowledge that should be documented;
+- proposed task-document updates, when applicable.

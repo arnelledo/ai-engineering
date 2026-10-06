@@ -387,6 +387,31 @@ Copilot deployment is currently implemented directly by:
 
 The installer generates Copilot-native files in the target application repository from the canonical framework definitions.
 
+#### Agent Tool Permissions
+
+Each generated agent declares an explicit `tools` list. Role boundaries are enforced by the harness, not only by instructions.
+
+| Agent | Tools | Can modify files |
+|---|---|---|
+| `orchestrator` | read, search, edit, execute, agent, todo | Yes (task documents, knowledge) |
+| `planner` | read, search, web | No |
+| `developer` | read, search, edit, execute, todo | Yes |
+| `tester` | read, search, edit, execute, todo | Yes |
+| `reviewer` | read, search | No |
+| `legacy-parity` | read, search | No |
+
+The tool names are the cross-platform aliases understood by both VS Code and the Copilot coding agent on GitHub.com.
+
+Prompts do not declare their own `tools`, so each prompt runs with the tools of the agent it targets. For example, `/investigate` and `/review` are read-only.
+
+#### Delegation
+
+Only the Orchestrator has the `agent` tool. Its `agents` list allows it to invoke the five specialists as subagents, each with its own context and its own tool restrictions. This keeps implementation and review independent.
+
+Read-only specialists return proposed task-document updates in their output. The Orchestrator records them under `.ai/tasks/`.
+
+Tool lists and subagent lists are configured in `$AgentMetadata` in `scripts/install.ps1`.
+
 ### Future Harnesses
 
 Additional adapters may later be implemented for harnesses such as Claude or Cursor.

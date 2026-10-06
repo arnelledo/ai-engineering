@@ -6,136 +6,77 @@ The objective is to improve engineering quality while reducing implementation ti
 
 ## Core Model
 
-The framework separates three different concerns:
+| Concern | Defines | Stored in |
+|---|---|---|
+| Engineering framework | How AI should work | This repository: `standards/`, `agents/`, `workflows/`, `prompts/` |
+| Persistent project knowledge | How a specific application works | The application repository: `.ai/` |
+| Active task context | Working context that survives sessions and agents | The application repository: `.ai/tasks/` |
 
-```text
-Engineering Framework
-        +
-Persistent Project Knowledge
-        +
-Active Task Context
-```
+For non-trivial work the framework follows:
 
-### Engineering Framework
-
-Defines how AI should work.
-
-Stored in this private framework repository:
-
-```text
-standards/
-agents/
-workflows/
-```
-
-### Persistent Project Knowledge
-
-Defines how a specific application works.
-
-Stored with the application repository:
-
-```text
-.ai/
-```
-
-### Active Task Context
-
-Preserves investigation and implementation context across sessions and specialized agents.
-
-Stored with the application repository:
-
-```text
-.ai/tasks/
-```
-
-## Engineering Workflow
-
-For non-trivial work:
-
-```text
-Understand
-    ↓
-Investigate
-    ↓
-Plan
-    ↓
-Implement
-    ↓
-Test
-    ↓
-Review
-    ↓
-Correct
-    ↓
-Verify
-    ↓
-Human Approval
-```
+Understand → Investigate → Plan → Implement → Test → Review → Correct → Verify → Human Approval
 
 Legacy modernization adds explicit parity analysis before implementation.
+
+Consequential operations (production deployment, destructive database operations, pushing or merging, infrastructure changes) always require explicit human authorization. See `standards/human-control.md`.
+
+## Quick Start
+
+Choose one harness per application repository: `GitHubCopilot` or `Claude`.
+
+Preview, then install:
+
+    .\scripts\install.ps1 -TargetRepo "C:\path\to\application" -Harness GitHubCopilot -DryRun
+    .\scripts\install.ps1 -TargetRepo "C:\path\to\application" -Harness GitHubCopilot
+
+Use `-Harness Claude` for Claude Code. Do not use `-Force` for a first installation.
+
+Then bootstrap the project knowledge:
+
+- **GitHub Copilot:** in VS Code Copilot Chat, select the Orchestrator agent and run `/bootstrap-knowledge`.
+- **Claude Code:** run `claude --agent orchestrator` (or open the Claude Code panel) and run `/bootstrap-knowledge`.
+
+Review the generated `.ai/` knowledge, correct unsupported claims, and commit the generated files and `.ai/` with the application.
+
+### Updating After Framework Changes
+
+Framework change → `-DryRun -Force` → Review → `-Force` → Review Git diff
+
+    .\scripts\install.ps1 -TargetRepo "C:\path\to\application" -DryRun -Force
+    .\scripts\install.ps1 -TargetRepo "C:\path\to\application" -Force
+
+When `-Harness` is omitted, the installer updates the harness recorded in `.ai/framework-manifest.json` (or installs GitHub Copilot when there is none). Changes made only to `.ai/` knowledge never require running the installer.
+
+Installing a different harness than the recorded one requires `-Force`; the previous harness's unmodified generated files are removed. See [Installer Reference](docs/installer.md) for `-Force`, the manifest, harness switching, and stale-file cleanup.
 
 ## Repository Structure
 
 ```text
 ai-engineering/
-├── README.md
-├── standards/
-│   ├── development.md
-│   ├── testing.md
-│   ├── review.md
-│   ├── security.md
-│   ├── legacy-parity.md
-│   ├── project-knowledge.md
-│   └── human-control.md
-├── agents/
-│   ├── orchestrator.md
-│   ├── planner.md
-│   ├── developer.md
-│   ├── tester.md
-│   ├── reviewer.md
-│   └── legacy-parity.md
-├── workflows/
-│   ├── feature.md
-│   ├── bug-fix.md
-│   ├── migration.md
-│   └── code-review.md
-├── prompts/
-│   ├── investigate.md
-│   ├── test.md
-│   ├── parity.md
-│   └── bootstrap-knowledge.md
-├── adapters/
-│   ├── README.md
-│   ├── github-copilot/
-│   │   └── adapter.ps1
-│   └── claude-code/
-│       └── adapter.ps1
+├── standards/     engineering standards (canonical)
+├── agents/        specialized agent roles (canonical)
+├── workflows/     end-to-end engineering workflows (canonical)
+├── prompts/       specialist commands (canonical)
 ├── scripts/
-│   ├── install.ps1
-│   ├── framework.psd1
-│   └── lib/
-│       ├── Common.ps1
-│       └── ProjectScaffold.ps1
-└── tests/
-    └── Invoke-InstallerTests.ps1
+│   ├── install.ps1       installer entry point
+│   ├── framework.psd1    harness-neutral metadata
+│   └── lib/              shared installer code and the .ai/ scaffold
+├── adapters/      one adapter per harness (GitHub Copilot, Claude Code)
+├── docs/          installer reference
+└── tests/         installer test suite
 ```
 
-## Source of Truth
+## How It Works
 
-The canonical engineering definitions live in:
+### Source of Truth
 
-- `standards/`
-- `agents/`
-- `workflows/`
-- `prompts/`
-
-These files are the source of truth.
+`standards/`, `agents/`, `workflows/`, and `prompts/` are the source of truth. All engineering instruction text lives there.
 
 `scripts/framework.psd1` describes the framework in harness-neutral terms: each agent's description, tool capabilities, subagents and role-specific standards; each command's source, agent and argument hint; and which standards form the repository-wide instructions.
 
-Harness-specific files are generated from these canonical definitions by an adapter:
+An adapter translates the canonical framework into a harness's native format:
 
-Canonical Framework → `install.ps1` → adapter → Application Repository
+Canonical framework → `install.ps1` → adapter → application repository
 
 | Canonical source | GitHub Copilot | Claude Code |
 |---|---|---|
@@ -145,287 +86,36 @@ Canonical Framework → `install.ps1` → adapter → Application Repository
 | Project-owned instructions | `.github/instructions/project.instructions.md` (scaffolded once) | `CLAUDE.md` (never created or modified) |
 | Project knowledge | `.ai/` (scaffolded once) | `.ai/` (scaffolded once) |
 
-A repository has one harness installed at a time.
+Adapters contain only harness-specific metadata, templates, and deployment logic, never copies of engineering instructions. See [adapters/README.md](adapters/README.md).
 
-All engineering instruction text lives in the canonical directories. The installer and adapters contain only harness-specific metadata, project scaffold templates, and deployment logic.
+### How Standards Are Delivered
 
-The repository-wide instructions are assembled from these standards, in order:
+The repository-wide instructions are assembled from `development.md`, `security.md`, `project-knowledge.md`, and `human-control.md`, in that order.
 
-1. `standards/development.md`
-2. `standards/security.md`
-3. `standards/project-knowledge.md`
-4. `standards/human-control.md`
+Role-specific standards are appended to the agents that need them: `testing.md` to the tester, `review.md` to the reviewer, and `legacy-parity.md` to the legacy parity analyst.
 
-Role-specific standards are appended to the agents that need them:
+`project-knowledge.md` must reach every agent. GitHub Copilot appends it to every agent, because Copilot subagents may not receive the repository-wide instructions. Claude Code loads `.claude/rules/` into every subagent, so it is not duplicated there.
 
-| Agent | Role-specific standards |
-|---|---|
-| `tester` | `testing.md` |
-| `reviewer` | `review.md` |
-| `legacy-parity` | `legacy-parity.md` |
-| `orchestrator`, `planner`, `developer` | none |
+Agent files contain only role-specific guidance and refer to the appended standards. Severity levels, finding format, review verdicts, test scenarios, and parity classifications are defined only in `standards/`.
 
-`standards/project-knowledge.md` must reach every agent:
-
-- GitHub Copilot appends it to every agent, because Copilot subagents start with their own context and may not receive the repository-wide instructions.
-- Claude Code loads `.claude/rules/` into every subagent, so the agents receive it from the rules file and it is not duplicated.
-
-Each agent must therefore be self-contained in its harness. Agent files therefore contain only role-specific guidance and refer to the appended standards instead of repeating them. Severity levels, finding format, review verdicts, test scenarios, and parity classifications are defined only in `standards/`.
-
-The installer refuses to run if a file in `standards/` is not delivered to any agent or to the repository-wide instructions. When adding a standard, add it to `InstructionStandards` or to an agent's `Standards` list in `scripts/framework.psd1`.
-
-Do not manually maintain multiple copies of the same engineering instructions when they can be generated from a canonical source.
-
-## Standards
-
-`standards/` defines general engineering expectations.
-
-Examples:
-
-- implementation discipline;
-- testing quality;
-- code review;
-- security;
-- legacy parity.
-
-Standards should remain application-independent.
+The installer refuses to run if a standard is not delivered anywhere. When adding a standard, add it to `InstructionStandards` or to an agent's `Standards` list in `scripts/framework.psd1`.
 
 ## Agents
 
-`agents/` contains canonical specialized engineering roles.
-
-### Orchestrator
-
-Coordinates non-trivial work and selects the appropriate workflow.
-
-### Planner
-
-Investigates requirements, execution flow, root cause, risks, and implementation strategy.
-
-### Developer
-
-Implements the smallest correct change.
-
-### Tester
-
-Performs adversarial verification.
-
-### Reviewer
-
-Independently evaluates correctness, risk, business behavior, architecture, security, and test quality.
-
-### Legacy Parity Analyst
-
-Compares modern behavior against authoritative legacy behavior.
-
-## Workflows
-
-`workflows/` defines repeatable engineering processes.
-
-### Feature
-
-Used for non-trivial feature development.
-
-### Bug Fix
-
-Requires root-cause investigation and regression verification.
-
-### Migration
-
-Used when legacy behavior must be preserved or intentionally changed.
-
-### Code Review
-
-Used for independent review without initial implementation changes.
-
-## Specialist Prompts
-
-The `prompts/` directory contains reusable specialist operations that are not complete engineering workflows.
-
-### Investigate
-
-Canonical source:
-
-`prompts/investigate.md`
-
-Generated as `/investigate` for GitHub Copilot and executed using the Planner agent.
-
-Its purpose is to investigate a problem without modifying production code.
-
-### Test
-
-Canonical source:
-
-`prompts/test.md`
-
-Generated as `/test` for GitHub Copilot and executed using the Tester agent.
-
-Its purpose is to test an implementation adversarially.
-
-### Parity
-
-Canonical source:
-
-`prompts/parity.md`
-
-Generated as `/parity` for GitHub Copilot and executed using the Legacy Parity agent.
-
-Its purpose is to compare modern behavior against an authoritative legacy implementation.
-
-### Bootstrap Project Knowledge
-
-`/bootstrap-knowledge` performs the initial knowledge-discovery pass for a repository.
-
-It investigates repository documentation, source code, tests, configuration, persistence, integrations, and legacy/reference implementations and populates the appropriate `.ai/` project-knowledge documents.
-
-The bootstrap process is evidence-driven. It must distinguish confirmed behavior from implementation observations and unknown business intent.
-
-Bootstrap is intended primarily for initial project onboarding. Persistent project knowledge should normally evolve incrementally through subsequent engineering work rather than being repeatedly regenerated.
-
-### Review
-
-There is intentionally no `prompts/review.md`.
-
-The canonical source for `/review` is:
-
-`workflows/code-review.md`
-
-This prevents duplicate review instructions and keeps a single source of truth.
-
-## Persistent Project Knowledge
-
-Application-specific engineering knowledge belongs inside the application repository under:
-
-```text
-.ai/
-├── README.md
-├── project.md
-├── architecture.md
-├── business-rules/
-├── components/
-├── database/
-├── integrations/
-├── legacy/
-├── decisions/
-└── tasks/
-```
-
-This knowledge should not be stored in the generic framework repository.
-
-Examples of application-specific information include:
-
-- business rules;
-- database tables;
-- service architecture;
-- integration behavior;
-- legacy implementation details;
-- accepted engineering decisions;
-- project terminology.
-
-## Project Knowledge Principles
-
-Project documentation provides useful engineering context but is not automatically authoritative.
-
-When documentation conflicts with:
-
-- source code;
-- executable tests;
-- database constraints;
-- integration contracts;
-- observed runtime behavior;
-
-the discrepancy should be investigated and reported.
-
-Do not silently choose whichever source is more convenient.
-
-## Durable Knowledge
-
-Examples of durable project knowledge include:
-
-- confirmed business rules;
-- architectural constraints;
-- persistence rules;
-- integration contracts;
-- intentional legacy differences;
-- accepted engineering decisions;
-- concurrency requirements.
-
-Durable knowledge belongs in the appropriate `.ai/` document.
-
-## Active Task Context
-
-Significant work may maintain a document under:
-
-```text
-.ai/tasks/
-```
-
-Task documents preserve working context across:
-
-- days;
-- AI conversations;
-- agents;
-- investigation;
-- implementation;
-- testing;
-- review.
-
-Task documents may contain:
-
-- requirement;
-- confirmed evidence;
-- hypotheses;
-- root cause;
-- plan;
-- implementation status;
-- test results;
-- review findings;
-- unresolved questions;
-- next steps.
-
-Task documents are working context and are not automatically authoritative business documentation.
-
-## Knowledge Maintenance
-
-At the end of significant work, determine whether durable project knowledge was discovered or changed.
-
-Confirmed durable knowledge should be added to the appropriate `.ai/` document.
-
-Do not promote:
-
-- speculation;
-- temporary debugging observations;
-- failed hypotheses;
-- incomplete conclusions
-
-into permanent project documentation.
-
-## Harness Adapters
-
-The framework is designed to remain independent from a specific AI product.
-
-Harness-specific integration belongs under:
-
-`adapters/`
-
-Adapters must not contain independent copies of canonical engineering instructions.
-
-The canonical source of truth remains:
-
-- `standards/`
-- `agents/`
-- `workflows/`
-- `prompts/`
-
-Adapters should contain only harness-specific metadata, templates, transformations, or deployment logic required to translate the canonical framework into a format understood by a particular AI harness.
-
-Each adapter is `adapters/<harness>/adapter.ps1`. It registers itself with the installer and declares its harness identifier, the paths it manages (used by stale-file cleanup and harness switching), its project-owned files, and its next steps.
-
-### Agent Tool Permissions
-
-Each generated agent declares an explicit tool list. Role boundaries are enforced by the harness, not only by instructions.
-
-Tools are declared once, as harness-neutral capabilities in `scripts/framework.psd1`, and each adapter translates them:
+| Agent | Role | Tool capabilities | Modifies files |
+|---|---|---|---|
+| `orchestrator` | Classifies the task, selects the workflow, delegates to specialists, owns task documents and verification | read, search, edit, execute, agent, todo, ask | Yes |
+| `planner` | Investigates requirements, execution flow, root cause, risks, and implementation strategy | read, search, web | No |
+| `developer` | Implements the smallest correct change | read, search, edit, execute, todo | Yes |
+| `tester` | Performs adversarial verification and writes tests | read, search, edit, execute, todo | Yes |
+| `reviewer` | Independently evaluates correctness, risk, business behavior, architecture, security, and test quality | read, search | No |
+| `legacy-parity` | Compares modern behavior against authoritative legacy behavior | read, search | No |
+
+Role boundaries are enforced by each harness's tool restrictions, not only by instructions.
+
+Only the Orchestrator can invoke other agents, and only the five specialists. Each specialist runs with its own context and tools, which keeps implementation and review independent. Read-only specialists return proposed task-document updates; the Orchestrator records them under `.ai/tasks/`.
+
+Each adapter translates the capabilities into harness tool names:
 
 | Capability | GitHub Copilot | Claude Code |
 |---|---|---|
@@ -438,90 +128,35 @@ Tools are declared once, as harness-neutral capabilities in `scripts/framework.p
 | todo | `todo` | `TodoWrite` |
 | ask | (not mapped) | `AskUserQuestion` |
 
-| Agent | Capabilities | Can modify files |
-|---|---|---|
-| `orchestrator` | read, search, edit, execute, agent, todo, ask | Yes (task documents, knowledge) |
-| `planner` | read, search, web | No |
-| `developer` | read, search, edit, execute, todo | Yes |
-| `tester` | read, search, edit, execute, todo | Yes |
-| `reviewer` | read, search | No |
-| `legacy-parity` | read, search | No |
+## Commands
 
-Commands run with the tools of the agent that executes them. For example, `/investigate` and the review command are read-only in both harnesses.
+| Command | Source | Runs as | Purpose |
+|---|---|---|---|
+| `/feature` | `workflows/feature.md` | orchestrator | Non-trivial feature development |
+| `/bug-fix` | `workflows/bug-fix.md` | orchestrator | Root-cause investigation, regression test, fix, review |
+| `/migration` | `workflows/migration.md` | orchestrator | Legacy modernization with explicit parity verification |
+| `/bootstrap-knowledge` | `prompts/bootstrap-knowledge.md` | orchestrator | Initial, evidence-driven population of `.ai/` |
+| `/investigate` | `prompts/investigate.md` | planner | Investigate a problem without modifying code |
+| `/test` | `prompts/test.md` | tester | Adversarial testing of an implementation |
+| `/parity` | `prompts/parity.md` | legacy-parity | Compare modern and legacy behavior |
+| `/review` (Copilot), `/code-review` (Claude Code) | `workflows/code-review.md` | reviewer | Independent review of the current change |
 
-### Delegation
+Commands run with the tools of their agent, so `/investigate`, `/parity`, and the review command are read-only.
 
-Only the Orchestrator has the agent capability. Its subagent list allows it to invoke the five specialists, each with its own context and its own tool restrictions. This keeps implementation and review independent.
+Bootstrap is intended for initial onboarding. Afterwards, project knowledge should evolve incrementally through normal engineering work.
 
-Read-only specialists return proposed task-document updates in their output. The Orchestrator records them under `.ai/tasks/`.
+## GitHub Copilot
 
-### GitHub Copilot
+Install with `-Harness GitHubCopilot` (the default). The installer generates `.github/copilot-instructions.md`, one `.github/agents/<agent>.agent.md` per agent, and one `.github/prompts/<command>.prompt.md` per command.
 
-Implemented by `adapters/github-copilot/adapter.ps1`. See [GitHub Copilot Deployment](#github-copilot-deployment).
-
-#### Project-Specific Copilot Instructions
-
-`.github/copilot-instructions.md` is framework-owned and replaced on every update. Do not edit it in an application repository.
-
-Repository-specific Copilot rules belong in `.github/instructions/project.instructions.md`. The installer creates it once with `applyTo: "**"` and never overwrites it, so customizations survive framework updates.
-
-Keep that file short; it is applied to every Copilot request. Durable project knowledge belongs under `.ai/`.
-
-### Claude Code
-
-Implemented by `adapters/claude-code/adapter.ps1`. See [Claude Code Deployment](#claude-code-deployment).
-
-### Future Harnesses
-
-Additional adapters, such as Cursor, may later be added as `adapters/<harness>/adapter.ps1`.
-
-Those adapters should consume `scripts/framework.psd1` and the canonical directories rather than maintain independent copies of engineering instructions.
-
-## GitHub Copilot Deployment
-
-The installer generates Copilot-native files inside an application repository.
-
-The target must be the root of the Git repository. Copilot reads `.github/` only from the repository root, so the installer refuses a subdirectory and reports the actual repository root.
-
-All files are written as UTF-8 without a byte-order mark, with LF line endings.
-
-Example:
-
-```text
-.github/
-├── copilot-instructions.md
-├── agents/
-│   ├── orchestrator.agent.md
-│   ├── planner.agent.md
-│   ├── developer.agent.md
-│   ├── tester.agent.md
-│   ├── reviewer.agent.md
-│   └── legacy-parity.agent.md
-│
-├── prompts/
-│   ├── feature.prompt.md
-│   ├── bug-fix.prompt.md
-│   ├── migration.prompt.md
-│   ├── investigate.prompt.md
-│   ├── test.prompt.md
-│   ├── review.prompt.md
-│   ├── parity.prompt.md
-│   └── bootstrap-knowledge.prompt.md
-│
-└── instructions/
-    └── project.instructions.md   (project-owned, created once)
-```
+`.github/copilot-instructions.md` is framework-owned and replaced on every update. Repository-specific Copilot rules belong in `.github/instructions/project.instructions.md`, which the installer creates once (`applyTo: "**"`) and never overwrites. Keep it short; it applies to every request.
 
 ### Requirements
 
-- VS Code with the GitHub Copilot Chat extension, kept on the current stable release.
-  - Custom agents in `.github/agents/*.agent.md` require VS Code 1.106 or later.
-  - Subagent delegation (the `agent` tool and the `agents` property) and the prompt-file `agent` field are newer features. Keep VS Code and Copilot Chat up to date.
-  - Older releases used `.chatmode.md` files and a `mode:` field. The installer does not generate those formats.
-- Windows PowerShell 5.1 or PowerShell 7 to run the installer.
-- Git, recommended. The installer uses it to verify the repository root and to record the framework commit.
+- VS Code with GitHub Copilot Chat on the current stable release. Custom agents require VS Code 1.106 or later; subagent delegation and the prompt-file `agent` field are newer, so keep both up to date.
+- Windows PowerShell 5.1 or PowerShell 7, and Git (recommended).
 
-### Where Each Generated File Works
+### Where Each File Works
 
 | File | VS Code | Copilot coding agent on GitHub.com |
 |---|---|---|
@@ -530,296 +165,60 @@ Example:
 | `.github/agents/*.agent.md` | Yes | Yes; `argument-hint` and `handoffs` are ignored |
 | `.github/prompts/*.prompt.md` | Yes | No |
 
-The slash commands (`/feature`, `/bug-fix`, `/review`, and so on) are VS Code features. On GitHub.com, select the custom agent (for example, the Orchestrator) and describe the task instead.
+Slash commands are VS Code features. On GitHub.com, select the custom agent and describe the task instead. To let the coding agent build and run tests on GitHub.com, add a `copilot-setup-steps.yml` workflow; see [adapters/github-copilot/README.md](adapters/github-copilot/README.md).
 
-Each prompt and agent declares an `argument-hint`, shown in the VS Code chat input, describing what to type after the command.
+## Claude Code
 
-### Copilot Coding Agent Setup
+Install with `-Harness Claude`. The installer generates `.claude/rules/ai-engineering.md`, one `.claude/agents/<agent>.md` per agent, and one `.claude/skills/<command>/SKILL.md` per command.
 
-The installer does not create `.github/workflows/copilot-setup-steps.yml`. The build and test environment depends on each application's stack, and the file is a CI workflow, so it is added per repository by the team.
+### Instructions
 
-Without it, the Copilot coding agent on GitHub.com may be unable to build or run tests, and the agents will report verification as not performed.
+The repository-wide standards go to `.claude/rules/ai-engineering.md`, which Claude Code loads in every session and every subagent. The rules file is about 380 lines, so keep `CLAUDE.md` short.
 
-To add it, create `.github/workflows/copilot-setup-steps.yml` with a single job named `copilot-setup-steps`. For example, for a .NET application:
-
-```yaml
-name: Copilot Setup Steps
-
-on: workflow_dispatch
-
-jobs:
-  copilot-setup-steps:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-      - run: dotnet restore
-```
-
-See GitHub's documentation on customizing the coding agent environment for the full set of options.
-
-## Claude Code Deployment
-
-Install with `-Harness Claude`. The installer generates:
-
-```text
-.claude/
-├── rules/
-│   └── ai-engineering.md
-├── agents/
-│   ├── orchestrator.md
-│   ├── planner.md
-│   ├── developer.md
-│   ├── tester.md
-│   ├── reviewer.md
-│   └── legacy-parity.md
-└── skills/
-    ├── feature/SKILL.md
-    ├── bug-fix/SKILL.md
-    ├── migration/SKILL.md
-    ├── code-review/SKILL.md
-    ├── investigate/SKILL.md
-    ├── test/SKILL.md
-    ├── parity/SKILL.md
-    └── bootstrap-knowledge/SKILL.md
-```
-
-### Repository-Wide Instructions
-
-The repository-wide standards are written to `.claude/rules/ai-engineering.md`, not to `CLAUDE.md`. Claude Code loads every rules file without a `paths` field in every session and in every subagent.
-
-`CLAUDE.md` belongs to the repository team, like `.github/instructions/project.instructions.md` does for Copilot. The installer never creates or modifies it. It also never creates one when it is missing, because a `CLAUDE.md` stops Claude Code from reading an existing `AGENTS.md` by default.
-
-The rules file is long (about 380 lines). It is loaded in every session, so keep `CLAUDE.md` short.
+`CLAUDE.md` and `.claude/settings.json` belong to the repository team. The installer never creates or modifies them. It does not create a missing `CLAUDE.md`, because one stops Claude Code from reading an existing `AGENTS.md` by default.
 
 ### Starting a Session
 
-Start Claude Code as the Orchestrator so the main conversation coordinates the work and delegates to the specialists:
-
     claude --agent orchestrator
 
-The workflow commands (`/feature`, `/bug-fix`, `/migration`, `/bootstrap-knowledge`) also tell Claude to follow the Orchestrator role when the session was started without `--agent`.
+Claude Code runs in the terminal, the VS Code Claude Code panel, or the Code tab of the Claude desktop app; all of them use the same `.claude/` files. The workflow commands also tell Claude to follow the Orchestrator role when the session was not started with `--agent`. To make the Orchestrator the default for every session, a team can add `"agent": "orchestrator"` to `.claude/settings.json`.
 
-The installer does not set a default agent in `.claude/settings.json`, which belongs to the repository team. To make the Orchestrator the default for every session, a team can add `"agent": "orchestrator"` there.
+### Command Behavior
 
-### Commands
+- The orchestrator commands (`/feature`, `/bug-fix`, `/migration`, `/bootstrap-knowledge`) run in the main conversation, so the Orchestrator can ask you questions at its human checkpoints.
+- The specialist commands run in their subagent (`context: fork`) with that subagent's tool restrictions. A forked subagent does not see the conversation, so describe the task after the command.
+- `/code-review` inserts the current `git status` and diffs before it runs, so the read-only reviewer sees the changes without shell access. This needs a local session; injected commands do not run in Cowork or cloud sessions.
+- All commands run only when typed (`disable-model-invocation: true`).
+- `/code-review` replaces Claude Code's bundled `/code-review` in the repository; the bundled `/review` alias still runs the bundled skill.
 
-| Command | Runs in | Notes |
-|---|---|---|
-| `/feature`, `/bug-fix`, `/migration`, `/bootstrap-knowledge` | Main conversation | The Orchestrator delegates each phase to the specialists. It can ask you questions at its human checkpoints. |
-| `/investigate` | `planner` subagent | Read-only. |
-| `/test` | `tester` subagent | |
-| `/parity` | `legacy-parity` subagent | Read-only. |
-| `/code-review` | `reviewer` subagent | Read-only. The current `git status`, unstaged diff, and staged diff are inserted into the command before it runs, so the reviewer sees the changes without shell access. |
+### VS Code Copilot Chat
 
-Specialist commands run in their subagent (`context: fork`), so the subagent's tool restrictions apply. A forked subagent does not see the conversation, so describe what to work on after the command.
+VS Code's Copilot Chat also reads `.claude/agents/` and `.claude/skills/` and translates them. That is still Copilot, not Claude Code, and Claude-specific behavior may not carry over. For a repository used mainly with Copilot Chat, install the GitHub Copilot harness instead.
 
-All commands are explicit: they run only when you type them (`disable-model-invocation: true`).
+## Project Knowledge
 
-`/code-review` replaces Claude Code's bundled `/code-review` skill in the repository. The bundled skill's `/review` alias still runs the bundled skill.
+Application-specific knowledge lives in the application repository, never in this framework:
 
-### Claude Code Requirements
+```text
+.ai/
+├── project.md         purpose, technology, terminology, verification commands
+├── architecture.md    boundaries, dependency direction, constraints
+├── business-rules/    durable observable business behavior
+├── components/        important components and responsibilities
+├── database/          persistence behavior and constraints
+├── integrations/      external systems and messaging
+├── legacy/            authoritative legacy behavior and parity
+├── decisions/         engineering decisions and rationale
+└── tasks/             active task context across sessions and agents
+```
 
-- A current Claude Code release. Custom subagents, skills with `context: fork`, `Agent(...)` subagent allowlists, `--agent`, and `.claude/rules/` are all used.
-- `/code-review` runs `git status` and `git diff` when it renders. They are pre-approved by the skill. If your permission settings deny them, the command aborts.
-
-### VS Code
-
-VS Code Copilot also reads `.claude/agents/` and `.claude/skills/`. Because a repository has only one harness installed, VS Code users of a Claude Code repository see the Claude Code agents and skills, translated by VS Code. The generated files target Claude Code; use the GitHub Copilot harness for repositories primarily used with Copilot.
-
-## Installation and Framework Updates
-
-The framework uses a single deployment script:
-
-`scripts/install.ps1`
-
-A separate `update.ps1` is intentionally not required.
-
-The same installer is used for both initial installation and future framework synchronization.
-
-### Choosing a Harness
-
-`-Harness` selects the harness: `GitHubCopilot` or `Claude`.
-
-A repository has one harness installed at a time:
-
-- When `-Harness` is omitted, the installer updates the harness recorded in `.ai/framework-manifest.json`, or installs GitHub Copilot when there is no manifest. Existing commands without `-Harness` therefore keep working exactly as before.
-- Installing a different harness than the recorded one requires `-Force`. The previous harness's unmodified generated files are removed, with the same safety rules as stale-file cleanup. Locally modified files are kept and reported. `.ai/` and project-owned files are never removed.
-
-Preview a switch first:
-
-    .\scripts\install.ps1 `
-        -TargetRepo "C:\path\to\application" `
-        -Harness Claude `
-        -DryRun `
-        -Force
-
-### First Installation
-
-Preview the installation first:
-
-    .\scripts\install.ps1 `
-        -TargetRepo "C:\path\to\application" `
-        -Harness GitHubCopilot `
-        -DryRun
-
-Then install:
-
-    .\scripts\install.ps1 `
-        -TargetRepo "C:\path\to\application" `
-        -Harness GitHubCopilot
-
-Use `-Harness Claude` for Claude Code.
-
-Do not use `-Force` for a normal first installation.
-
-### Updating an Application After Framework Changes
-
-When the canonical framework changes, for example:
-
-- an agent changes;
-- a standard changes;
-- a workflow changes;
-- a specialist prompt changes;
-- generation logic changes;
-
-preview the update with:
-
-    .\scripts\install.ps1 `
-        -TargetRepo "C:\path\to\application" `
-        -DryRun `
-        -Force
-
-After reviewing the intended changes, apply them with:
-
-    .\scripts\install.ps1 `
-        -TargetRepo "C:\path\to\application" `
-        -Force
-
-Therefore the normal update workflow is:
-
-Framework change → `-DryRun -Force` → Review → `-Force` → Review Git diff
-
-### Framework Manifest
-
-`.ai/framework-manifest.json` records:
-
-- the installed harness (`github-copilot` or `claude-code`);
-- the framework commit that was installed, and whether the framework repository had uncommitted changes;
-- the path and content hash of every generated file;
-- the project-owned files the installer scaffolds.
-
-It has no timestamp, so it changes only when the framework commit or the generated content changes.
-
-On later runs the manifest is used to:
-
-- warn when `-Force` will overwrite a generated file that was modified after the last installation;
-- detect generated files that the framework no longer produces.
-
-Line-ending conversion by Git is not treated as a modification.
-
-### Stale Generated Files
-
-When a framework prompt or agent is renamed or removed, the previously generated file becomes stale.
-
-- Without `-Force`, stale files are reported.
-- With `-Force`, stale files under the harness's managed paths are removed, but only when their content still matches the recorded hash. Directories left empty are removed.
-- Stale files that were modified locally, or that were recorded by an older installer without hashes, are kept and reported for manual review.
-
-### What `-Force` Means
-
-`-Force` authorizes the installer to replace framework-generated files that already exist in the target repository.
-
-Framework-owned files include:
-
-- GitHub Copilot: `.github/copilot-instructions.md`, `.github/agents/*`, `.github/prompts/*`
-- Claude Code: `.claude/rules/ai-engineering.md`, `.claude/agents/*`, `.claude/skills/*`
-- `.ai/framework-manifest.json`
-
-When `-Force` would overwrite an existing file that the framework did not create (it is not in the manifest), the installer warns first. Run with `-DryRun -Force` to see these warnings before applying.
-
-Project-specific files are protected from `-Force`.
-
-The application owns:
-
-- `CLAUDE.md` and `.claude/settings.json` (never touched by the installer)
-- `.github/instructions/project.instructions.md`
-- `.ai/README.md`
-- `.ai/project.md`
-- `.ai/architecture.md`
-- `.ai/business-rules/*`
-- `.ai/components/*`
-- `.ai/database/*`
-- `.ai/integrations/*`
-- `.ai/legacy/*`
-- `.ai/decisions/*`
-- `.ai/tasks/*`
-
-The installer must not overwrite these project-owned knowledge files merely because `-Force` was supplied.
-
-### When Not to Run the Installer
-
-Changes made only to application-specific `.ai/` knowledge do not require running `install.ps1`.
-
-For example, changing:
-
-`.ai/business-rules/shipping-import.md`
-
-or:
-
-`.ai/tasks/settlements-not-created.md`
-
-does not require reinstalling the framework.
-
-Run `install.ps1` when deploying or synchronizing changes from the shared AI Engineering Framework.
+The installer scaffolds these files once and never overwrites them. How agents use, verify, and maintain this knowledge is defined in `standards/project-knowledge.md`. Do not store secrets in framework or project-knowledge documentation.
 
 ## Testing the Installer
 
-`tests/Invoke-InstallerTests.ps1` runs the installer end to end against throwaway repositories in a temporary directory: fresh installs for both harnesses, idempotent re-runs, harness switching, stale-file cleanup, local-modification and non-framework-file warnings, and validation failures.
-
     .\tests\Invoke-InstallerTests.ps1
 
-It requires git and runs on Windows PowerShell 5.1 and PowerShell 7. Run it after changing the installer, an adapter, or `scripts/framework.psd1`.
-
-## Security
-
-Do not store secrets in framework or project-knowledge documentation.
-
-Examples include:
-
-- passwords;
-- API keys;
-- access tokens;
-- private certificates;
-- production credentials;
-- secret connection strings.
-
-## Human Control
-
-AI may assist with:
-
-- repository investigation;
-- planning;
-- implementation;
-- builds;
-- tests;
-- code review;
-- parity analysis.
-
-Consequential operations require explicit human authorization.
-
-Examples include:
-
-- production deployment;
-- destructive database operations;
-- pushing or merging changes;
-- production infrastructure changes;
-- unrelated dependency upgrades;
-- consequential CI/CD modifications.
+Runs the installer end to end against throwaway repositories for both harnesses, including re-runs, harness switching, stale-file cleanup, and validation failures. Requires Git; runs on Windows PowerShell 5.1 and PowerShell 7. Run it after changing the installer, an adapter, or `scripts/framework.psd1`.
 
 ## Design Principle
 

@@ -10,26 +10,9 @@ Deliver the requested behavior while preserving architecture, business behavior,
 
 ## Project Knowledge
 
-Before implementing a non-trivial change, inspect relevant persistent project knowledge.
+Apply the Project Knowledge Standards (appended to this agent) before implementing a non-trivial change.
 
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect relevant documents under:
-
-- `.ai/business-rules/`
-- `.ai/components/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
-
-Do not load unrelated documentation unnecessarily.
-
-When project documentation conflicts with source code, tests, database constraints, or integration contracts, report the discrepancy rather than silently choosing an interpretation.
+For implementation, pay particular attention to business rules, database constraints, integration contracts, and engineering decisions that the change must preserve.
 
 ## Before Implementation
 

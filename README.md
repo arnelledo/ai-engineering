@@ -84,7 +84,9 @@ ai-engineering/
 │   ├── testing.md
 │   ├── review.md
 │   ├── security.md
-│   └── legacy-parity.md
+│   ├── legacy-parity.md
+│   ├── project-knowledge.md
+│   └── human-control.md
 ├── agents/
 │   ├── orchestrator.md
 │   ├── planner.md
@@ -100,7 +102,8 @@ ai-engineering/
 ├── prompts/
 │   ├── investigate.md
 │   ├── test.md
-│   └── parity.md
+│   ├── parity.md
+│   └── bootstrap-knowledge.md
 ├── adapters/
 │   └── README.md
 └── scripts/
@@ -130,7 +133,23 @@ The application repository receives:
 - `.github/agents/`
 - `.github/prompts/`
 
+and, once, these project-owned files:
+
+- `.github/instructions/project.instructions.md`
+- `.ai/`
+
 Project-specific knowledge lives separately under `.ai/`.
+
+All engineering instruction text lives in the canonical directories. `install.ps1` contains only Copilot-specific metadata (descriptions, tool lists, file mappings), project scaffold templates, and deployment logic.
+
+`.github/copilot-instructions.md` is assembled from these standards, in order:
+
+1. `standards/development.md`
+2. `standards/security.md`
+3. `standards/project-knowledge.md`
+4. `standards/human-control.md`
+
+Every generated agent also receives `standards/project-knowledge.md`, appended to its role definition. Delegated subagents start with their own context and may not receive the repository-wide instructions, so each agent must be self-contained. Agent files therefore contain only role-specific guidance and refer to the appended standard instead of repeating it.
 
 Do not manually maintain multiple copies of the same engineering instructions when they can be generated from a canonical source.
 
@@ -412,6 +431,14 @@ Read-only specialists return proposed task-document updates in their output. The
 
 Tool lists and subagent lists are configured in `$AgentMetadata` in `scripts/install.ps1`.
 
+#### Project-Specific Copilot Instructions
+
+`.github/copilot-instructions.md` is framework-owned and replaced on every update. Do not edit it in an application repository.
+
+Repository-specific Copilot rules belong in `.github/instructions/project.instructions.md`. The installer creates it once with `applyTo: "**"` and never overwrites it, so customizations survive framework updates.
+
+Keep that file short; it is applied to every Copilot request. Durable project knowledge belongs under `.ai/`.
+
 ### Future Harnesses
 
 Additional adapters may later be implemented for harnesses such as Claude or Cursor.
@@ -421,6 +448,10 @@ Those adapters should consume the canonical framework rather than maintain indep
 ## GitHub Copilot Deployment
 
 The installer generates Copilot-native files inside an application repository.
+
+The target must be the root of the Git repository. Copilot reads `.github/` only from the repository root, so the installer refuses a subdirectory and reports the actual repository root.
+
+All files are written as UTF-8 without a byte-order mark, with LF line endings.
 
 Example:
 
@@ -435,14 +466,18 @@ Example:
 │   ├── reviewer.agent.md
 │   └── legacy-parity.agent.md
 │
-└── prompts/
-    ├── feature.prompt.md
-    ├── bug-fix.prompt.md
-    ├── migration.prompt.md
-    ├── investigate.prompt.md
-    ├── test.prompt.md
-    ├── review.prompt.md
-    └── parity.prompt.md
+├── prompts/
+│   ├── feature.prompt.md
+│   ├── bug-fix.prompt.md
+│   ├── migration.prompt.md
+│   ├── investigate.prompt.md
+│   ├── test.prompt.md
+│   ├── review.prompt.md
+│   ├── parity.prompt.md
+│   └── bootstrap-knowledge.prompt.md
+│
+└── instructions/
+    └── project.instructions.md   (project-owned, created once)
 ```
 
 ## Installation and Framework Updates
@@ -497,6 +532,31 @@ Therefore the normal update workflow is:
 
 Framework change → `-DryRun -Force` → Review → `-Force` → Review Git diff
 
+### Framework Manifest
+
+`.ai/framework-manifest.json` records:
+
+- the framework commit that was installed, and whether the framework repository had uncommitted changes;
+- the path and content hash of every generated file;
+- the project-owned files the installer scaffolds.
+
+It has no timestamp, so it changes only when the framework commit or the generated content changes.
+
+On later runs the manifest is used to:
+
+- warn when `-Force` will overwrite a generated file that was modified after the last installation;
+- detect generated files that the framework no longer produces.
+
+Line-ending conversion by Git is not treated as a modification.
+
+### Stale Generated Files
+
+When a framework prompt or agent is renamed or removed, the previously generated file becomes stale.
+
+- Without `-Force`, stale files are reported.
+- With `-Force`, stale files under `.github/` are removed, but only when their content still matches the recorded hash.
+- Stale files that were modified locally, or that were recorded by an older installer without hashes, are kept and reported for manual review.
+
 ### What `-Force` Means
 
 `-Force` authorizes the installer to replace framework-generated files that already exist in the target repository.
@@ -508,10 +568,11 @@ Framework-owned files include:
 - `.github/prompts/*`
 - `.ai/framework-manifest.json`
 
-Project-specific knowledge is protected from `-Force`.
+Project-specific files are protected from `-Force`.
 
 The application owns:
 
+- `.github/instructions/project.instructions.md`
 - `.ai/README.md`
 - `.ai/project.md`
 - `.ai/architecture.md`

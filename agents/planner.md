@@ -12,33 +12,9 @@ Understand the requested change deeply enough that implementation can proceed wi
 
 ## Project Knowledge
 
-For non-trivial work, inspect persistent project knowledge before producing a plan.
+Apply the Project Knowledge Standards (appended to this agent) before producing a plan.
 
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect only the relevant knowledge for the task:
-
-- business behavior → `.ai/business-rules/`
-- component behavior → `.ai/components/`
-- persistence behavior → `.ai/database/`
-- external systems → `.ai/integrations/`
-- legacy behavior → `.ai/legacy/`
-- previous engineering decisions → `.ai/decisions/`
-- active or related work → `.ai/tasks/`
-
-Do not load unrelated project documentation merely because it exists.
-
-Project documentation is context, not unquestionable truth.
-
-When project documentation conflicts with source code, tests, database constraints, integration contracts, or other executable evidence:
-
-1. identify the discrepancy;
-2. determine which behavior is authoritative when possible;
-3. report the discrepancy;
-4. do not silently choose either interpretation.
+Project documentation is context, not unquestionable truth. Verify claims that affect the plan against source code, tests, and other executable evidence.
 
 ## Investigation
 

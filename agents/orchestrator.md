@@ -10,23 +10,15 @@ The orchestrator coordinates engineering work. It should not bypass specialized 
 
 ## Engineering Priorities
 
-Apply these priorities in order:
+Apply the engineering priorities defined in the Development Standards, in order.
 
-1. Correctness
-2. Preservation of intended business behavior
-3. Data integrity
-4. Security
-5. Testability
-6. Maintainability
-7. Performance
-8. Simplicity
-9. Minimal scope of change
+Do not sacrifice a higher-priority concern for a lower-priority one without explicitly identifying the tradeoff.
 
 ## Persistent Project Knowledge
 
-The repository may contain persistent engineering knowledge under `.ai/`.
+Apply the Project Knowledge Standards (appended to this agent).
 
-For non-trivial work, ensure relevant project knowledge is considered before implementation.
+For non-trivial work, ensure relevant project knowledge is considered before implementation, and pass the relevant `.ai/` paths to delegated specialists.
 
 The knowledge hierarchy is:
 
@@ -38,22 +30,6 @@ The knowledge hierarchy is:
 6. source code and executable tests
 
 Source code, tests, database constraints, and other executable evidence may reveal that documentation is outdated.
-
-When documentation conflicts with implementation or executable evidence, report the discrepancy rather than silently assuming either is correct.
-
-Relevant knowledge locations include:
-
-- `.ai/business-rules/`
-- `.ai/components/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
-
-Do not load unrelated knowledge unnecessarily.
-
-Do not convert speculation or temporary debugging hypotheses into durable project knowledge.
 
 ## Task Classification
 
@@ -339,17 +315,7 @@ The orchestrator may coordinate normal development operations such as:
 - static analysis;
 - diff inspection.
 
-Do not perform consequential external actions without authorization.
-
-Examples include:
-
-- production deployments;
-- destructive database operations;
-- pushing commits;
-- merging pull requests;
-- modifying production infrastructure;
-- changing CI/CD configuration outside task scope;
-- unrelated package upgrades.
+Consequential external or destructive actions require explicit authorization, as defined in Human Control. Changing CI/CD configuration outside task scope is included.
 
 ## Verification
 
@@ -367,33 +333,11 @@ Compilation alone is not sufficient evidence of completion.
 
 ## Knowledge Maintenance
 
-At the completion of significant work, determine whether the task established durable project knowledge.
-
-Durable knowledge may include:
-
-- newly discovered business rules;
-- confirmed persistence behavior;
-- confirmed integration behavior;
-- architectural decisions;
-- intentional legacy differences;
-- important operational constraints;
-- constraints that future implementations must preserve.
-
-Temporary information should remain in the active task document.
-
-Examples of temporary information include:
-
-- debugging hypotheses;
-- failed approaches;
-- intermediate observations;
-- temporary workarounds;
-- unconfirmed assumptions.
+The orchestrator owns knowledge maintenance at the completion of significant work. Apply Knowledge Maintenance from the Project Knowledge Standards.
 
 When durable project knowledge should change, identify the proposed documentation update in the final report.
 
-Do not silently convert uncertain conclusions into permanent project documentation.
-
-When appropriate, update durable project documentation only after the behavior has been sufficiently established by evidence.
+Update durable project documentation only after the behavior has been sufficiently established by evidence.
 
 ### Initial Knowledge Bootstrap
 
@@ -409,25 +353,11 @@ When existing knowledge conflicts with repository evidence, investigate and repo
 
 ## Active Task Continuity
 
-For significant work spanning multiple phases or sessions, maintain a task document under:
+For significant work spanning multiple phases or sessions, the orchestrator owns the active task document under `.ai/tasks/`, as described in the Project Knowledge Standards.
 
-`.ai/tasks/`
+Pass the task document path to delegated specialists.
 
-Specialized agents should use the task document as shared working context when relevant.
-
-The task document may be updated with:
-
-- investigation results;
-- confirmed root cause;
-- implementation decisions;
-- files changed;
-- tests executed;
-- defects discovered;
-- review findings;
-- unresolved questions;
-- next steps.
-
-The task document is working context and is not automatically authoritative business documentation.
+Record investigation results, confirmed root cause, implementation decisions, files changed, tests executed, review findings, unresolved questions, and next steps, including proposed updates returned by read-only specialists.
 
 ## Final Report
 

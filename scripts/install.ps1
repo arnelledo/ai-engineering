@@ -10,19 +10,31 @@
         agents/
         workflows/
 
+        prompts/
+
     The framework repository remains the source of truth.
 
-    Generated Copilot files are written to:
+    Generated (framework-owned) Copilot files are written to:
 
         .github/copilot-instructions.md
         .github/agents/
         .github/prompts/
 
-    Persistent project-specific engineering knowledge is scaffolded under:
+    Project-owned files are created once and never overwritten:
 
+        .github/instructions/project.instructions.md
         .ai/
 
-    Existing project knowledge under .ai/ is never overwritten.
+    The target must be the root of a Git repository, because Copilot reads
+    .github/ only from the repository root.
+
+    The framework manifest (.ai/framework-manifest.json) records the
+    framework commit and a hash of every generated file. On later runs it
+    is used to warn about locally modified generated files and to remove
+    generated files that the framework no longer produces.
+
+    All files are written as UTF-8 without a byte-order mark, with LF line
+    endings.
 
 .EXAMPLE
     .\scripts\install.ps1 `
@@ -64,11 +76,12 @@ $AgentsRoot = Join-Path $FrameworkRoot "agents"
 $WorkflowsRoot = Join-Path $FrameworkRoot "workflows"
 $PromptsRoot = Join-Path $FrameworkRoot "prompts"
 
-$TargetRepo = [System.IO.Path]::GetFullPath($TargetRepo)
+$TargetRepo = [System.IO.Path]::GetFullPath($TargetRepo).TrimEnd('\', '/')
 
 $GitHubRoot = Join-Path $TargetRepo ".github"
 $TargetAgentsRoot = Join-Path $GitHubRoot "agents"
 $TargetPromptsRoot = Join-Path $GitHubRoot "prompts"
+$TargetInstructionsRoot = Join-Path $GitHubRoot "instructions"
 
 $TargetAiRoot = Join-Path $TargetRepo ".ai"
 
@@ -129,32 +142,110 @@ function Assert-FileExists {
     }
 }
 
-function Test-IsGitRepository {
-    param([string]$Path)
+function Test-GitAvailable {
+    return [bool](Get-Command git -ErrorAction SilentlyContinue)
+}
 
-    $current = $Path
+function Invoke-GitQuery {
+    # Runs a read-only git command and returns trimmed stdout, or $null on
+    # failure. ErrorActionPreference is relaxed locally because Windows
+    # PowerShell 5.1 turns native stderr output into terminating errors
+    # when ErrorActionPreference is Stop.
 
-    while ($current) {
+    param(
+        [string]$RepositoryPath,
+        [string[]]$Arguments
+    )
 
-        $gitPath = Join-Path $current ".git"
-
-        if (Test-Path -LiteralPath $gitPath) {
-            return $true
-        }
-
-        $parent = Split-Path -Parent $current
-
-        if (
-            [string]::IsNullOrWhiteSpace($parent) -or
-            $parent -eq $current
-        ) {
-            break
-        }
-
-        $current = $parent
+    if (-not (Test-GitAvailable)) {
+        return $null
     }
 
-    return $false
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    try {
+        $output = & git -C $RepositoryPath @Arguments 2>$null
+
+        if ($LASTEXITCODE -ne 0) {
+            return $null
+        }
+
+        return (($output | Out-String).Trim())
+    }
+    catch {
+        return $null
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
+function Test-SamePath {
+    param(
+        [string]$First,
+        [string]$Second
+    )
+
+    $a = [System.IO.Path]::GetFullPath($First).TrimEnd('\', '/')
+    $b = [System.IO.Path]::GetFullPath($Second).TrimEnd('\', '/')
+
+    return [string]::Equals(
+        $a,
+        $b,
+        [System.StringComparison]::OrdinalIgnoreCase
+    )
+}
+
+function Assert-RepositoryRoot {
+    # Copilot reads .github/ only from the repository root. Installing into
+    # a subdirectory would produce files that Copilot silently ignores.
+
+    param([string]$Path)
+
+    $topLevel = Invoke-GitQuery `
+        -RepositoryPath $Path `
+        -Arguments @("rev-parse", "--show-toplevel")
+
+    if ($topLevel) {
+
+        if (-not (Test-SamePath $topLevel $Path)) {
+            $suggested = [System.IO.Path]::GetFullPath($topLevel)
+            throw "Target must be the root of a Git repository. Copilot only reads .github/ from the repository root. Repository root: $suggested"
+        }
+
+        return
+    }
+
+    # git is unavailable or the query failed: require .git directly in the
+    # target (a directory, or a file for worktrees and submodules).
+
+    if (-not (Test-Path -LiteralPath (Join-Path $Path ".git"))) {
+        throw "Target must be the root of a Git repository (no .git found directly in $Path)."
+    }
+}
+
+function Get-FrameworkVersion {
+
+    $commit = Invoke-GitQuery `
+        -RepositoryPath $FrameworkRoot `
+        -Arguments @("rev-parse", "HEAD")
+
+    if (-not $commit) {
+        return [ordered]@{
+            commit = "unknown"
+            uncommittedChanges = $null
+        }
+    }
+
+    $status = Invoke-GitQuery `
+        -RepositoryPath $FrameworkRoot `
+        -Arguments @("status", "--porcelain")
+
+    return [ordered]@{
+        commit = $commit
+        uncommittedChanges = -not [string]::IsNullOrWhiteSpace($status)
+    }
 }
 
 # ===========================================================================
@@ -192,22 +283,118 @@ function Read-TextFile {
         -Encoding UTF8
 }
 
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+function ConvertTo-NormalizedText {
+    # LF line endings, no BOM character, single trailing newline.
+
+    param([string]$Content)
+
+    $text = $Content.TrimStart([char]0xFEFF)
+    $text = $text -replace "`r`n", "`n"
+    $text = $text -replace "`r", "`n"
+
+    return $text.TrimEnd("`n") + "`n"
+}
+
+function Get-TextHash {
+    param([string]$Content)
+
+    $normalized = ConvertTo-NormalizedText $Content
+    $bytes = $Utf8NoBom.GetBytes($normalized)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+
+    try {
+        $hash = $sha.ComputeHash($bytes)
+    }
+    finally {
+        $sha.Dispose()
+    }
+
+    return (($hash | ForEach-Object { $_.ToString("x2") }) -join "")
+}
+
+function Get-FileTextHash {
+    # Hash of a file's normalized text, so that Git line-ending conversion
+    # or a BOM does not register as a local modification.
+
+    param([string]$Path)
+
+    $content = [System.IO.File]::ReadAllText($Path, $Utf8NoBom)
+
+    return Get-TextHash $content
+}
+
+function Get-RepositoryRelativePath {
+    param([string]$Path)
+
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $prefix = $TargetRepo + [System.IO.Path]::DirectorySeparatorChar
+
+    if (-not $full.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Path is outside the target repository: $Path"
+    }
+
+    return $full.Substring($prefix.Length).Replace('\', '/')
+}
+
+function Write-TextFileNoBom {
+    param(
+        [string]$Path,
+        [string]$Content
+    )
+
+    [System.IO.File]::WriteAllText(
+        $Path,
+        (ConvertTo-NormalizedText $Content),
+        $Utf8NoBom
+    )
+}
+
+# Generated files produced by this run: relative path -> content hash.
+$GeneratedFiles = [ordered]@{}
+
+# Generated files recorded by the previous installation manifest.
+$PreviousGeneratedFiles = @{}
+
 function Write-GeneratedFile {
     param(
         [string]$Path,
         [string]$Content
     )
 
+    $relativePath = Get-RepositoryRelativePath $Path
+    $hash = Get-TextHash $Content
+
+    $GeneratedFiles[$relativePath] = $hash
+
     $parent = Split-Path -Parent $Path
 
     Ensure-Directory -Path $parent
 
-    if (
-        (Test-Path -LiteralPath $Path) -and
-        -not $Force
-    ) {
+    $exists = Test-Path -LiteralPath $Path
+
+    if ($exists -and -not $Force) {
         Write-WarningMessage "Skipped existing generated file: $Path"
         return $false
+    }
+
+    if ($exists) {
+
+        $currentHash = Get-FileTextHash $Path
+
+        if ($currentHash -eq $hash) {
+            Write-Info "Unchanged: $Path"
+            return $true
+        }
+
+        if (
+            $PreviousGeneratedFiles.ContainsKey($relativePath) -and
+            $PreviousGeneratedFiles[$relativePath] -and
+            $PreviousGeneratedFiles[$relativePath] -ne $currentHash
+        ) {
+            Write-WarningMessage "Local changes will be overwritten (file was modified after the last installation): $Path"
+        }
     }
 
     if ($DryRun) {
@@ -215,10 +402,7 @@ function Write-GeneratedFile {
         return $true
     }
 
-    Set-Content `
-        -LiteralPath $Path `
-        -Value $Content `
-        -Encoding UTF8
+    Write-TextFileNoBom -Path $Path -Content $Content
 
     Write-Success "Generated: $Path"
 
@@ -231,11 +415,11 @@ function Write-ScaffoldFile {
         [string]$Content
     )
 
-    # Project knowledge is owned by the application repository.
-    # Never overwrite it, even when -Force is supplied.
+    # Project-owned files belong to the application repository.
+    # Never overwrite them, even when -Force is supplied.
 
     if (Test-Path -LiteralPath $Path) {
-        Write-Info "Preserved project knowledge: $Path"
+        Write-Info "Preserved project-owned file: $Path"
         return
     }
 
@@ -248,12 +432,99 @@ function Write-ScaffoldFile {
         return
     }
 
-    Set-Content `
-        -LiteralPath $Path `
-        -Value $Content `
-        -Encoding UTF8
+    Write-TextFileNoBom -Path $Path -Content $Content
 
     Write-Success "Created project scaffold: $Path"
+}
+
+function Read-PreviousManifest {
+
+    if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+        return
+    }
+
+    try {
+        $json = [System.IO.File]::ReadAllText($ManifestPath, $Utf8NoBom).TrimStart([char]0xFEFF)
+        $manifest = $json | ConvertFrom-Json
+    }
+    catch {
+        Write-WarningMessage "Could not read previous manifest; stale-file cleanup is skipped: $ManifestPath"
+        return
+    }
+
+    if (-not ($manifest.PSObject.Properties.Name -contains "generated")) {
+        return
+    }
+
+    foreach ($entry in @($manifest.generated)) {
+
+        if ($entry -is [string]) {
+            # Manifest written by an earlier installer version: no hashes.
+            $PreviousGeneratedFiles[$entry] = $null
+        }
+        elseif ($entry.PSObject.Properties.Name -contains "path") {
+            $PreviousGeneratedFiles[$entry.path] = $entry.sha256
+        }
+    }
+}
+
+function Remove-StaleGeneratedFiles {
+    # Removes files generated by a previous installation that the current
+    # framework no longer produces. Only unmodified files under .github/
+    # are removed, and only when -Force is supplied.
+
+    Write-Step "Checking for stale generated files"
+
+    $stale = @(
+        $PreviousGeneratedFiles.Keys |
+            Where-Object { -not $GeneratedFiles.Contains($_) } |
+            Sort-Object
+    )
+
+    if ($stale.Count -eq 0) {
+        Write-Info "No stale generated files."
+        return
+    }
+
+    foreach ($relativePath in $stale) {
+
+        if (-not $relativePath.StartsWith(".github/")) {
+            Write-WarningMessage "Not removing stale entry outside .github/: $relativePath"
+            continue
+        }
+
+        $fullPath = Join-Path $TargetRepo ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
+
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+            continue
+        }
+
+        $recordedHash = $PreviousGeneratedFiles[$relativePath]
+
+        if (-not $recordedHash) {
+            Write-WarningMessage "Stale generated file kept (no recorded hash to confirm it is unmodified). Remove manually if no longer needed: $relativePath"
+            continue
+        }
+
+        if ((Get-FileTextHash $fullPath) -ne $recordedHash) {
+            Write-WarningMessage "Stale generated file kept (modified after installation). Remove manually if no longer needed: $relativePath"
+            continue
+        }
+
+        if (-not $Force) {
+            Write-WarningMessage "Stale generated file (no longer produced by the framework). Run with -Force to remove: $relativePath"
+            continue
+        }
+
+        if ($DryRun) {
+            Write-Info "[DryRun] Remove stale generated file: $relativePath"
+            continue
+        }
+
+        Remove-Item -LiteralPath $fullPath -Force
+
+        Write-Success "Removed stale generated file: $relativePath"
+    }
 }
 
 # ===========================================================================
@@ -447,151 +718,40 @@ $Body
 # Repository-wide Copilot instructions
 # ===========================================================================
 
+# Canonical standards included in the repository-wide instructions, in
+# order. Standards not listed here are role-specific and are delivered
+# through the agents that need them.
+
+$CopilotInstructionStandards = @(
+    "development.md",
+    "security.md",
+    "project-knowledge.md",
+    "human-control.md"
+)
+
 function New-CopilotInstructions {
 
-    $development = Read-TextFile (
-        Join-Path $StandardsRoot "development.md"
-    )
+    $sections = foreach ($standard in $CopilotInstructionStandards) {
+        (Read-TextFile (Join-Path $StandardsRoot $standard)).Trim()
+    }
 
-    $security = Read-TextFile (
-        Join-Path $StandardsRoot "security.md"
-    )
-
-    return @"
+    $header = @"
 # AI Engineering Instructions
 
 These instructions define the baseline engineering expectations for this
-repository.
+repository. This file is generated by the AI Engineering Framework installer
+and is replaced on framework updates. Do not edit it directly.
+
+Repository-specific instructions belong in
+``.github/instructions/project.instructions.md``. Project-specific knowledge
+belongs under ``.ai/``.
 
 Project-specific architecture, business rules, persistence requirements,
 and explicit task instructions take precedence over generic framework
 guidance when they are more specific.
-
-$development
-
-$security
-
-# Persistent Project Knowledge
-
-Project-specific engineering knowledge is maintained under `.ai/`.
-
-For non-trivial work, inspect relevant project knowledge before planning
-or modifying code.
-
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect only the knowledge relevant to the task:
-
-- business behavior -> `.ai/business-rules/`
-- component behavior -> `.ai/components/`
-- persistence behavior -> `.ai/database/`
-- external systems -> `.ai/integrations/`
-- legacy behavior -> `.ai/legacy/`
-- previous engineering decisions -> `.ai/decisions/`
-- active or related work -> `.ai/tasks/`
-
-Do not load unrelated project knowledge unnecessarily.
-
-Project documentation provides context but may become outdated.
-
-Source code, executable tests, database constraints, integration contracts,
-and observed behavior may provide stronger evidence.
-
-When documentation materially conflicts with executable evidence:
-
-1. identify the discrepancy;
-2. investigate which behavior is authoritative;
-3. report the discrepancy;
-4. do not silently choose an interpretation.
-
-Do not invent project-specific behavior when evidence is unavailable.
-
-# Active Task Continuity
-
-For significant work spanning multiple phases or sessions, use an active
-task document under `.ai/tasks/`.
-
-Task documents may preserve:
-
-- requirement or problem;
-- relevant project knowledge;
-- confirmed evidence;
-- hypotheses;
-- root cause;
-- relevant files;
-- implementation plan;
-- implementation status;
-- tests;
-- review findings;
-- unresolved questions;
-- next steps;
-- durable knowledge candidates.
-
-Clearly distinguish confirmed evidence from hypotheses.
-
-Task documents are working context and are not automatically authoritative
-business documentation.
-
-# Knowledge Maintenance
-
-At the completion of significant work, determine whether durable project
-knowledge was discovered or changed.
-
-Examples include:
-
-- confirmed business rules;
-- persistence constraints;
-- integration behavior;
-- architectural decisions;
-- intentional legacy differences;
-- concurrency requirements;
-- important operational constraints.
-
-Update durable project knowledge only when sufficiently supported by
-evidence.
-
-Do not convert debugging hypotheses, temporary observations, or speculation
-into permanent project documentation.
-
-# Engineering Workflow
-
-For non-trivial work:
-
-1. Understand the requirement.
-2. Inspect relevant persistent project knowledge.
-3. Investigate the existing implementation.
-4. Identify root cause or expected design.
-5. Plan the smallest correct change.
-6. Implement.
-7. Test adversarially.
-8. Review independently.
-9. Correct blocking findings.
-10. Build and run relevant tests.
-11. Inspect the final diff.
-12. Identify any durable project-knowledge updates.
-
-Do not skip investigation merely to reach implementation faster.
-
-# Human Control
-
-Do not perform consequential external or destructive actions without
-explicit authorization.
-
-This includes:
-
-- production deployment;
-- destructive database operations;
-- pushing commits;
-- merging pull requests;
-- production infrastructure changes;
-- unrelated dependency upgrades;
-- unrelated CI/CD modifications.
-
-Compilation alone is not sufficient evidence that a task is complete.
 "@
+
+    return (@($header.Trim()) + $sections) -join "`n`n"
 }
 
 # ===========================================================================
@@ -1059,32 +1219,77 @@ or removed according to the repository team's preferred workflow.
         -Content $architectureContent
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "business-rules\README.md") `
+        -Path (Join-Path $TargetAiRoot "business-rules/README.md") `
         -Content $businessRulesReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "components\README.md") `
+        -Path (Join-Path $TargetAiRoot "components/README.md") `
         -Content $componentsReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "database\README.md") `
+        -Path (Join-Path $TargetAiRoot "database/README.md") `
         -Content $databaseReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "integrations\README.md") `
+        -Path (Join-Path $TargetAiRoot "integrations/README.md") `
         -Content $integrationsReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "legacy\README.md") `
+        -Path (Join-Path $TargetAiRoot "legacy/README.md") `
         -Content $legacyReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "decisions\README.md") `
+        -Path (Join-Path $TargetAiRoot "decisions/README.md") `
         -Content $decisionsReadme
 
     Write-ScaffoldFile `
-        -Path (Join-Path $TargetAiRoot "tasks\README.md") `
+        -Path (Join-Path $TargetAiRoot "tasks/README.md") `
         -Content $tasksReadme
+}
+
+# ===========================================================================
+# Project-owned Copilot instructions
+# ===========================================================================
+
+function Install-ProjectInstructions {
+
+    # Repository-specific, always-applied Copilot rules. Owned by the
+    # application repository: created once, never overwritten, even with
+    # -Force. This is where teams customize Copilot behavior without
+    # editing the framework-generated copilot-instructions.md.
+
+    Write-Step "Creating project-owned Copilot instructions"
+
+    $content = @'
+---
+applyTo: "**"
+---
+
+# Project Instructions
+
+<!--
+Repository-specific instructions for GitHub Copilot.
+
+This file is owned by this repository. The AI Engineering Framework installer
+creates it once and never overwrites it, so customizations here survive
+framework updates. Do not edit .github/copilot-instructions.md instead; that
+file is replaced on every framework update.
+
+Keep this file short. It is applied to every Copilot request in this
+repository. Add rules such as:
+
+- authoritative build and test commands;
+- repository-specific coding conventions;
+- directories or files that must not be modified.
+
+Durable project knowledge (business rules, architecture, persistence and
+integration behavior) belongs under .ai/, not here.
+-->
+'@
+
+    Write-ScaffoldFile `
+        -Path (Join-Path $TargetInstructionsRoot "project.instructions.md") `
+        -Content $content
 }
 
 # ===========================================================================
@@ -1095,13 +1300,22 @@ function Install-Agents {
 
     Write-Step "Generating Copilot custom agents"
 
+    # Every agent receives the canonical project-knowledge standard.
+    # Delegated subagents start with their own context and may not receive
+    # the repository-wide instructions, so each agent must be
+    # self-contained. The text is maintained once, in standards/.
+
+    $sharedStandard = (Read-TextFile (Join-Path $StandardsRoot "project-knowledge.md")).Trim()
+
     foreach ($agentName in $AgentMetadata.Keys) {
 
         $sourcePath = Join-Path `
             $AgentsRoot `
             "$agentName.md"
 
-        $body = Read-TextFile $sourcePath
+        $agentBody = (Read-TextFile $sourcePath).Trim()
+
+        $body = $agentBody + "`n`n" + $sharedStandard
 
         $content = New-AgentContent `
             -AgentName $agentName `
@@ -1231,31 +1445,26 @@ function Install-Manifest {
 
     Write-Step "Writing framework manifest"
 
+    # No timestamp: the manifest only changes when the framework commit or
+    # the generated content changes, which keeps Git diffs meaningful.
+
+    $generated = @(
+        $GeneratedFiles.Keys | Sort-Object | ForEach-Object {
+            [ordered]@{
+                path = $_
+                sha256 = $GeneratedFiles[$_]
+            }
+        }
+    )
+
     $manifest = [ordered]@{
         framework = "ai-engineering-framework"
-        installedAtUtc = [DateTime]::UtcNow.ToString("o")
-        frameworkSource = "ai-engineering-framework"
+        manifestVersion = 2
         harness = "github-copilot"
-
-        generated = @(
-            ".github/copilot-instructions.md",
-            ".github/agents/orchestrator.agent.md",
-            ".github/agents/planner.agent.md",
-            ".github/agents/developer.agent.md",
-            ".github/agents/tester.agent.md",
-            ".github/agents/reviewer.agent.md",
-            ".github/agents/legacy-parity.agent.md",
-            ".github/prompts/feature.prompt.md",
-            ".github/prompts/bug-fix.prompt.md",
-            ".github/prompts/migration.prompt.md",
-            ".github/prompts/investigate.prompt.md",
-            ".github/prompts/test.prompt.md",
-            ".github/prompts/review.prompt.md",
-            ".github/prompts/parity.prompt.md",
-            ".github/prompts/bootstrap-knowledge.prompt.md"
-        )
-
-        projectKnowledge = @(
+        frameworkVersion = Get-FrameworkVersion
+        generated = $generated
+        projectOwned = @(
+            ".github/instructions/project.instructions.md",
             ".ai/README.md",
             ".ai/project.md",
             ".ai/architecture.md",
@@ -1269,11 +1478,35 @@ function Install-Manifest {
         )
     }
 
+    if ($manifest.frameworkVersion.uncommittedChanges) {
+        Write-WarningMessage "The framework repository has uncommitted changes. The recorded commit does not fully describe the installed content."
+    }
+
     $json = $manifest | ConvertTo-Json -Depth 10
 
-    Write-GeneratedFile `
-        -Path $ManifestPath `
-        -Content $json | Out-Null
+    # The manifest is not recorded in its own generated-file list.
+
+    if ((Test-Path -LiteralPath $ManifestPath) -and -not $Force) {
+        Write-WarningMessage "Skipped existing manifest: $ManifestPath"
+        return
+    }
+
+    if (
+        (Test-Path -LiteralPath $ManifestPath) -and
+        ((Get-FileTextHash $ManifestPath) -eq (Get-TextHash $json))
+    ) {
+        Write-Info "Unchanged: $ManifestPath"
+        return
+    }
+
+    if ($DryRun) {
+        Write-Info "[DryRun] Write manifest: $ManifestPath"
+        return
+    }
+
+    Write-TextFileNoBom -Path $ManifestPath -Content $json
+
+    Write-Success "Written: $ManifestPath"
 }
 
 # ===========================================================================
@@ -1313,13 +1546,17 @@ Assert-DirectoryExists `
     -Path $TargetRepo `
     -Description "Target repository"
 
-if (-not (Test-IsGitRepository -Path $TargetRepo)) {
-    throw "Target path does not appear to be inside a Git repository: $TargetRepo"
+if (Test-SamePath $TargetRepo $FrameworkRoot) {
+    throw "Target repository cannot be the framework repository itself."
 }
+
+Assert-RepositoryRoot -Path $TargetRepo
 
 $requiredFiles = @(
     (Join-Path $StandardsRoot "development.md"),
     (Join-Path $StandardsRoot "security.md"),
+    (Join-Path $StandardsRoot "project-knowledge.md"),
+    (Join-Path $StandardsRoot "human-control.md"),
 
     (Join-Path $AgentsRoot "orchestrator.md"),
     (Join-Path $AgentsRoot "planner.md"),
@@ -1331,7 +1568,7 @@ $requiredFiles = @(
     (Join-Path $WorkflowsRoot "feature.md"),
     (Join-Path $WorkflowsRoot "bug-fix.md"),
     (Join-Path $WorkflowsRoot "migration.md"),
-    (Join-Path $WorkflowsRoot "code-review.md")
+    (Join-Path $WorkflowsRoot "code-review.md"),
 
     (Join-Path $PromptsRoot "investigate.md"),
     (Join-Path $PromptsRoot "test.md"),
@@ -1355,6 +1592,8 @@ Ensure-Directory $TargetAgentsRoot
 Ensure-Directory $TargetPromptsRoot
 Ensure-Directory $TargetAiRoot
 
+Read-PreviousManifest
+
 Write-Step "Generating repository Copilot instructions"
 
 $copilotInstructions = New-CopilotInstructions
@@ -1370,6 +1609,10 @@ Install-WorkflowPrompts
 Install-SpecialistPrompts
 
 Install-ProjectScaffolding
+
+Install-ProjectInstructions
+
+Remove-StaleGeneratedFiles
 
 Install-Manifest
 
@@ -1391,5 +1634,6 @@ Write-Host "  3. Run /bootstrap-knowledge to discover and populate persistent pr
 Write-Host "  4. Review the generated .ai/ knowledge"
 Write-Host "  5. Use the Reviewer agent to independently validate the initial knowledge when appropriate"
 Write-Host "  6. Correct any unsupported or inaccurate claims"
-Write-Host "  7. Commit .github/ and reviewed .ai/ knowledge with the application repository"
-Write-Host "  8. Continue normal development using the Orchestrator"
+Write-Host "  7. Add repository-specific Copilot rules to .github/instructions/project.instructions.md"
+Write-Host "  8. Commit .github/ and reviewed .ai/ knowledge with the application repository"
+Write-Host "  9. Continue normal development using the Orchestrator"

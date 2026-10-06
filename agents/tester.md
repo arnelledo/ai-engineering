@@ -14,26 +14,9 @@ Testing quality is measured by confidence and behavioral coverage, not test coun
 
 ## Project Knowledge
 
-Before testing non-trivial behavior, inspect relevant persistent project knowledge.
-
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect relevant documents under:
-
-- `.ai/business-rules/`
-- `.ai/components/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
+Apply the Project Knowledge Standards (appended to this agent) before testing non-trivial behavior.
 
 Use documented business behavior to identify scenarios that implementation-focused tests may miss.
-
-Project documentation is not automatically authoritative when contradicted by executable evidence.
 
 ## Testing Approach
 

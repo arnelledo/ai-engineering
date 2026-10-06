@@ -16,26 +16,9 @@ Do not report purely stylistic preferences unless they create meaningful enginee
 
 ## Project Knowledge
 
-For non-trivial reviews, inspect relevant persistent project knowledge.
-
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect relevant documents under:
-
-- `.ai/business-rules/`
-- `.ai/components/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
+Apply the Project Knowledge Standards (appended to this agent) for non-trivial reviews.
 
 Use project knowledge to evaluate whether the change violates known business or architectural constraints.
-
-When documentation conflicts with executable evidence, report the discrepancy.
 
 ## Review Context
 

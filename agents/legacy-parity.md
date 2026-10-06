@@ -14,27 +14,9 @@ Implementation structure does not need to match when observable behavior is equi
 
 ## Project Knowledge
 
-Before parity analysis, inspect relevant persistent knowledge.
+Apply the Project Knowledge Standards (appended to this agent) before parity analysis.
 
-Start with:
-
-- `.ai/project.md`
-- `.ai/architecture.md`
-
-Then inspect:
-
-- `.ai/business-rules/`
-- `.ai/database/`
-- `.ai/integrations/`
-- `.ai/legacy/`
-- `.ai/decisions/`
-- `.ai/tasks/`
-
-Pay particular attention to:
-
-`.ai/legacy/`
-
-for known authoritative sources and previously accepted differences.
+Pay particular attention to `.ai/legacy/` for known authoritative sources and previously accepted differences.
 
 Do not assume existing parity documentation is correct when contradicted by source or executable evidence.
 

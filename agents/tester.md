@@ -14,7 +14,7 @@ Testing quality is measured by confidence and behavioral coverage, not test coun
 
 ## Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent) before testing non-trivial behavior.
+Apply the Project Knowledge Standards before testing non-trivial behavior.
 
 Use documented business behavior to identify scenarios that implementation-focused tests may miss.
 

@@ -10,7 +10,7 @@ Deliver the requested behavior while preserving architecture, business behavior,
 
 ## Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent) before implementing a non-trivial change.
+Apply the Project Knowledge Standards before implementing a non-trivial change.
 
 For implementation, pay particular attention to business rules, database constraints, integration contracts, and engineering decisions that the change must preserve.
 

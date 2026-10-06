@@ -16,7 +16,7 @@ Do not sacrifice a higher-priority concern for a lower-priority one without expl
 
 ## Persistent Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent).
+Apply the Project Knowledge Standards.
 
 For non-trivial work, ensure relevant project knowledge is considered before implementation, and pass the relevant `.ai/` paths to delegated specialists.
 

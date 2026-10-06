@@ -12,7 +12,7 @@ Identify meaningful correctness, business, data, security, architecture, perform
 
 ## Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent) for non-trivial reviews.
+Apply the Project Knowledge Standards for non-trivial reviews.
 
 Use project knowledge to evaluate whether the change violates known business or architectural constraints.
 

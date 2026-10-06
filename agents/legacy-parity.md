@@ -14,7 +14,7 @@ Implementation structure does not need to match when observable behavior is equi
 
 ## Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent) before parity analysis.
+Apply the Project Knowledge Standards before parity analysis.
 
 Pay particular attention to `.ai/legacy/` for known authoritative sources and previously accepted differences.
 

@@ -12,7 +12,7 @@ Understand the requested change deeply enough that implementation can proceed wi
 
 ## Project Knowledge
 
-Apply the Project Knowledge Standards (appended to this agent) before producing a plan.
+Apply the Project Knowledge Standards before producing a plan.
 
 Project documentation is context, not unquestionable truth. Verify claims that affect the plan against source code, tests, and other executable evidence.
 

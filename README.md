@@ -230,6 +230,16 @@ Generated as `/parity` for GitHub Copilot and executed using the Legacy Parity a
 
 Its purpose is to compare modern behavior against an authoritative legacy implementation.
 
+### Bootstrap Project Knowledge
+
+`/bootstrap-knowledge` performs the initial knowledge-discovery pass for a repository.
+
+It investigates repository documentation, source code, tests, configuration, persistence, integrations, and legacy/reference implementations and populates the appropriate `.ai/` project-knowledge documents.
+
+The bootstrap process is evidence-driven. It must distinguish confirmed behavior from implementation observations and unknown business intent.
+
+Bootstrap is intended primarily for initial project onboarding. Persistent project knowledge should normally evolve incrementally through subsequent engineering work rather than being repeatedly regenerated.
+
 ### Review
 
 There is intentionally no `prompts/review.md`.

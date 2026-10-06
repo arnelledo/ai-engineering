@@ -371,6 +371,18 @@ Do not silently convert uncertain conclusions into permanent project documentati
 
 When appropriate, update durable project documentation only after the behavior has been sufficiently established by evidence.
 
+### Initial Knowledge Bootstrap
+
+When explicitly asked to bootstrap project knowledge, perform a repository-level knowledge-discovery pass before modifying `.ai/`.
+
+Use existing documentation for orientation, but validate important claims against repository evidence.
+
+Bootstrap is primarily an initialization operation. Once substantive project knowledge exists, prefer incremental knowledge maintenance through normal engineering work rather than repeatedly regenerating the entire knowledge base.
+
+Never replace established project knowledge merely because a new analysis would phrase it differently.
+
+When existing knowledge conflicts with repository evidence, investigate and report the discrepancy before changing authoritative documentation.
+
 ## Active Task Continuity
 
 For significant work spanning multiple phases or sessions, maintain a task document under:

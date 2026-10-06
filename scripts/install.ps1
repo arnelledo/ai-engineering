@@ -346,6 +346,11 @@ $PromptMetadata = @{
         Description = "Compare modern behavior against an authoritative legacy implementation."
         Agent = "legacy-parity"
     }
+
+    "bootstrap-knowledge" = @{
+        Description = "Bootstrap persistent project knowledge from repository evidence."
+        Agent = "orchestrator"
+    }
 }
 
 function New-PromptContent {
@@ -1129,6 +1134,11 @@ function Install-SpecialistPrompts {
             Source = "parity.md"
             Destination = "parity.prompt.md"
             PromptName = "parity"
+        },
+        @{
+            Source = "bootstrap-knowledge.md"
+            Destination = "bootstrap-knowledge.prompt.md"
+            PromptName = "bootstrap-knowledge"
         }
     )
 
@@ -1182,7 +1192,8 @@ function Install-Manifest {
             ".github/prompts/investigate.prompt.md",
             ".github/prompts/test.prompt.md",
             ".github/prompts/review.prompt.md",
-            ".github/prompts/parity.prompt.md"
+            ".github/prompts/parity.prompt.md",
+            ".github/prompts/bootstrap-knowledge.prompt.md"
         )
 
         projectKnowledge = @(
@@ -1265,7 +1276,8 @@ $requiredFiles = @(
 
     (Join-Path $PromptsRoot "investigate.md"),
     (Join-Path $PromptsRoot "test.md"),
-    (Join-Path $PromptsRoot "parity.md")
+    (Join-Path $PromptsRoot "parity.md"),
+    (Join-Path $PromptsRoot "bootstrap-knowledge.md")
 )
 
 foreach ($file in $requiredFiles) {
@@ -1313,14 +1325,12 @@ else {
 }
 
 Write-Host ""
-Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "  1. Complete .ai/project.md"
-Write-Host "  2. Complete .ai/architecture.md"
-Write-Host "  3. Add business rules under .ai/business-rules/"
-Write-Host "  4. Add persistence knowledge under .ai/database/"
-Write-Host "  5. Add integration knowledge under .ai/integrations/"
-Write-Host "  6. Add legacy knowledge under .ai/legacy/ when applicable"
-Write-Host "  7. Commit project knowledge with the application repository"
-Write-Host "  8. Open the repository in VS Code"
-Write-Host "  9. Test Copilot with /investigate"
-Write-Host ""
+Write-Host "Next steps:"
+Write-Host "  1. Open the repository in VS Code"
+Write-Host "  2. Select the Orchestrator agent in Copilot Chat"
+Write-Host "  3. Run /bootstrap-knowledge to discover and populate persistent project knowledge"
+Write-Host "  4. Review the generated .ai/ knowledge"
+Write-Host "  5. Use the Reviewer agent to independently validate the initial knowledge when appropriate"
+Write-Host "  6. Correct any unsupported or inaccurate claims"
+Write-Host "  7. Commit .github/ and reviewed .ai/ knowledge with the application repository"
+Write-Host "  8. Continue normal development using the Orchestrator"

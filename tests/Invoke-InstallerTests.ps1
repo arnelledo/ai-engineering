@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     End-to-end tests for scripts/install.ps1.
@@ -302,6 +303,7 @@ try {
     Assert-True (Test-RepoFile $copilot ".ai/project.md") ".ai/ scaffolded"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $copilot ".claude"))) "no Claude files"
     Assert-True ((Read-Manifest $copilot).harness -eq "github-copilot") "manifest records github-copilot"
+    Assert-True ((Read-RepoFile $copilot ".ai/framework-manifest.json").StartsWith("{`n  `"framework`": `"ai-engineering-framework`",`n  `"manifestVersion`": 2,`n")) "manifest uses the stable JSON format"
     Assert-FileFormat $copilot "Copilot"
 
     $orchestrator = Read-RepoFile $copilot ".github/agents/orchestrator.agent.md"

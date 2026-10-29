@@ -684,6 +684,97 @@ function ConvertTo-YamlInlineList {
 }
 
 # ===========================================================================
+# JSON
+# ===========================================================================
+
+function ConvertTo-JsonString {
+    param([string]$Value)
+
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append('"')
+
+    foreach ($char in $Value.ToCharArray()) {
+        switch ($char) {
+            '"' { [void]$builder.Append('\"') }
+            '\' { [void]$builder.Append('\\') }
+            "`n" { [void]$builder.Append('\n') }
+            "`r" { [void]$builder.Append('\r') }
+            "`t" { [void]$builder.Append('\t') }
+            default {
+                if ([int]$char -lt 0x20) {
+                    [void]$builder.Append(('\u{0:x4}' -f [int]$char))
+                }
+                else {
+                    [void]$builder.Append($char)
+                }
+            }
+        }
+    }
+
+    [void]$builder.Append('"')
+
+    return $builder.ToString()
+}
+
+function ConvertTo-StableJson {
+    # JSON with two-space indentation that is identical on Windows
+    # PowerShell 5.1 and PowerShell 7, whose ConvertTo-Json output differs.
+    # Supports dictionaries, arrays, strings, booleans, numbers, and null.
+
+    param(
+        [AllowNull()]
+        [object]$Value,
+        [int]$Depth = 0
+    )
+
+    $indent = "  " * ($Depth + 1)
+    $closingIndent = "  " * $Depth
+
+    if ($null -eq $Value) {
+        return "null"
+    }
+
+    if ($Value -is [bool]) {
+        return $(if ($Value) { "true" } else { "false" })
+    }
+
+    if ($Value -is [string]) {
+        return ConvertTo-JsonString $Value
+    }
+
+    if ($Value -is [int] -or $Value -is [long]) {
+        return $Value.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+    }
+
+    if ($Value -is [System.Collections.IDictionary]) {
+        if ($Value.Count -eq 0) {
+            return "{}"
+        }
+
+        $members = foreach ($key in $Value.Keys) {
+            $indent + (ConvertTo-JsonString ([string]$key)) + ": " +
+                (ConvertTo-StableJson -Value $Value[$key] -Depth ($Depth + 1))
+        }
+
+        return "{`n" + ($members -join ",`n") + "`n$closingIndent}"
+    }
+
+    if ($Value -is [System.Collections.IEnumerable]) {
+        $items = foreach ($item in $Value) {
+            $indent + (ConvertTo-StableJson -Value $item -Depth ($Depth + 1))
+        }
+
+        if (-not $items) {
+            return "[]"
+        }
+
+        return "[`n" + (@($items) -join ",`n") + "`n$closingIndent]"
+    }
+
+    throw "Unsupported JSON value type: $($Value.GetType().FullName)"
+}
+
+# ===========================================================================
 # Markdown composition
 # ===========================================================================
 
@@ -764,7 +855,7 @@ function Install-Manifest {
         Write-WarningMessage "The framework repository has uncommitted changes. The recorded commit does not fully describe the installed content."
     }
 
-    $json = $manifest | ConvertTo-Json -Depth 10
+    $json = ConvertTo-StableJson $manifest
 
     # The manifest is not recorded in its own generated-file list.
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
     Installs the AI Engineering Framework into an application repository.
@@ -59,6 +60,10 @@
     .\scripts\install.ps1 `
         -TargetRepo "C:\Source\MyApplication" `
         -Force
+
+.EXAMPLE
+    # macOS / Linux (PowerShell 7)
+    ./scripts/install.ps1 -TargetRepo ~/src/my-application -Harness Claude -DryRun
 #>
 
 [CmdletBinding()]

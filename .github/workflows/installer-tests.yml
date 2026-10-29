@@ -1,0 +1,31 @@
+name: Installer Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  installer-tests:
+    name: ${{ matrix.os }} / ${{ matrix.shell }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            shell: powershell
+          - os: windows-latest
+            shell: pwsh
+          - os: macos-latest
+            shell: pwsh
+          - os: ubuntu-latest
+            shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run installer tests
+        shell: ${{ matrix.shell }}
+        run: ./tests/Invoke-InstallerTests.ps1

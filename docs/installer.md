@@ -13,6 +13,12 @@ Detailed behavior of `scripts/install.ps1`. For everyday use, see the Quick Star
 
 The same installer is used for first installation and for later framework updates.
 
+## Platforms
+
+The installer runs on Windows PowerShell 5.1 and on PowerShell 7 on Windows, macOS, and Linux. On macOS, install PowerShell 7 with `brew install powershell`, then run `./scripts/install.ps1` (or `pwsh ./scripts/install.ps1`) with the same parameters.
+
+Generated files and the manifest are byte-identical on every platform and PowerShell version, so team members on different operating systems can update the same repository without spurious diffs. The manifest is written by the installer's own JSON writer rather than `ConvertTo-Json`, whose formatting differs between Windows PowerShell 5.1 and PowerShell 7. A manifest written by an earlier installer is reformatted once on the next `-Force` run.
+
 ## Target Repository
 
 The target must be the root of a Git repository. Copilot and Claude Code read their configuration only from the repository root, so the installer refuses a subdirectory and reports the actual root. It also refuses the framework repository itself.

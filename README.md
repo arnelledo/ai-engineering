@@ -31,6 +31,13 @@ Preview, then install:
 
 Use `-Harness Claude` for Claude Code. Do not use `-Force` for a first installation.
 
+On macOS or Linux, install PowerShell 7 (`brew install powershell` on macOS) and run the same commands with forward slashes:
+
+    ./scripts/install.ps1 -TargetRepo ~/src/application -Harness Claude -DryRun
+    ./scripts/install.ps1 -TargetRepo ~/src/application -Harness Claude
+
+If the script is not executable in your checkout, run it as `pwsh ./scripts/install.ps1 ...`. The installer requires Windows PowerShell 5.1 or PowerShell 7 and Git (recommended); its output is identical on every platform.
+
 Then bootstrap the project knowledge:
 
 - **GitHub Copilot:** in VS Code Copilot Chat, select the Orchestrator agent and run `/bootstrap-knowledge`.
@@ -154,7 +161,7 @@ Install with `-Harness GitHubCopilot` (the default). The installer generates `.g
 ### Requirements
 
 - VS Code with GitHub Copilot Chat on the current stable release. Custom agents require VS Code 1.106 or later; subagent delegation and the prompt-file `agent` field are newer, so keep both up to date.
-- Windows PowerShell 5.1 or PowerShell 7, and Git (recommended).
+- Windows PowerShell 5.1 or PowerShell 7 (Windows, macOS, or Linux), and Git (recommended).
 
 ### Where Each File Works
 
@@ -216,9 +223,12 @@ The installer scaffolds these files once and never overwrites them. How agents u
 
 ## Testing the Installer
 
-    .\tests\Invoke-InstallerTests.ps1
+    .\tests\Invoke-InstallerTests.ps1      # Windows
+    ./tests/Invoke-InstallerTests.ps1      # macOS / Linux
 
 Runs the installer end to end against throwaway repositories for both harnesses, including re-runs, harness switching, stale-file cleanup, and validation failures. Requires Git; runs on Windows PowerShell 5.1 and PowerShell 7. Run it after changing the installer, an adapter, or `scripts/framework.psd1`.
+
+The `Installer Tests` GitHub Actions workflow (`.github/workflows/installer-tests.yml`) runs the suite on Windows (Windows PowerShell 5.1 and PowerShell 7), macOS, and Linux for every push and pull request.
 
 ## Design Principle
 

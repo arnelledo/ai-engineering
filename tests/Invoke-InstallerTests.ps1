@@ -138,6 +138,35 @@ function Read-RepoFile {
     return [System.IO.File]::ReadAllText((Get-RepoFile $Repo $RelativePath))
 }
 
+function Test-ErrorMessage {
+    # PowerShell 7's error view can wrap a thrown message at the console
+    # width and prefix continuation lines with "|", and the width differs
+    # between runners. Compare with whitespace and "|" removed so the check
+    # does not depend on where the message wraps.
+
+    param(
+        [string]$Output,
+        [string]$Message
+    )
+
+    $flatOutput = $Output -replace '[\s|]', ''
+    $flatMessage = $Message -replace '[\s|]', ''
+
+    if ($flatOutput.Contains($flatMessage)) {
+        return $true
+    }
+
+    # Show what the installer printed, so a failure on a CI runner can be
+    # diagnosed from the log.
+    Write-Host "        Expected message: $Message" -ForegroundColor Yellow
+    Write-Host "        Installer output:" -ForegroundColor Yellow
+    foreach ($line in ($Output -split "`r?`n")) {
+        Write-Host "        > $line"
+    }
+
+    return $false
+}
+
 function Read-Manifest {
     param([string]$Repo)
 
@@ -386,7 +415,7 @@ try {
 
     $result = Invoke-Installer $Framework $switch @("-Harness", "GitHubCopilot")
     Assert-True ($result.ExitCode -ne 0) "switch without -Force is refused"
-    Assert-True ($result.Output -match "Only one harness can be installed at a time") "refusal explains one harness per repository"
+    Assert-True (Test-ErrorMessage $result.Output "Only one harness can be installed at a time") "refusal explains one harness per repository"
     Assert-True (Test-NoneExist $switch $CopilotFiles) "nothing installed after refusal"
 
     $result = Invoke-Installer $Framework $switch @("-Harness", "GitHubCopilot", "-Force", "-DryRun")
@@ -438,15 +467,15 @@ try {
     Write-TestHeader "Validation"
 
     $result = Invoke-Installer $Framework (Join-Path $copilot ".github")
-    Assert-True (($result.ExitCode -ne 0) -and ($result.Output -match "root of a Git repository")) "subdirectory target refused"
+    Assert-True (($result.ExitCode -ne 0) -and (Test-ErrorMessage $result.Output "root of a Git repository")) "subdirectory target refused"
 
     $result = Invoke-Installer $Framework $Framework
-    Assert-True (($result.ExitCode -ne 0) -and ($result.Output -match "cannot be the framework repository")) "framework repository refused as target"
+    Assert-True (($result.ExitCode -ne 0) -and (Test-ErrorMessage $result.Output "cannot be the framework repository")) "framework repository refused as target"
 
     $orphan = Join-Path $Framework "standards/orphan.md"
     [System.IO.File]::WriteAllText($orphan, "# Orphan`n")
     $result = Invoke-Installer $Framework (New-GitRepository "orphan") @("-DryRun")
-    Assert-True (($result.ExitCode -ne 0) -and ($result.Output -match "not delivered")) "undelivered standard refused"
+    Assert-True (($result.ExitCode -ne 0) -and (Test-ErrorMessage $result.Output "not delivered")) "undelivered standard refused"
     Remove-Item -LiteralPath $orphan
 }
 finally {

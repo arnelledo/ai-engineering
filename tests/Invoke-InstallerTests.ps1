@@ -465,3 +465,7 @@ Write-Host "Passed: $script:Passed  Failed: $script:Failed" -ForegroundColor $(i
 if ($script:Failed -gt 0) {
     exit 1
 }
+
+# Explicit, because $LASTEXITCODE still holds the nonzero exit code of the
+# last installer run that was expected to fail.
+exit 0

@@ -121,14 +121,23 @@ function Assert-RepositoryRoot {
 
     param([string]$Path)
 
-    $topLevel = Invoke-GitQuery `
+    # The prefix (the target's path relative to the repository root) is
+    # empty at the root. Comparing it avoids comparing absolute paths, which
+    # differ when the target path contains a symlink: on macOS, /var and
+    # /tmp resolve to /private/var and /private/tmp in git's output.
+
+    $prefix = Invoke-GitQuery `
         -RepositoryPath $Path `
-        -Arguments @("rev-parse", "--show-toplevel")
+        -Arguments @("rev-parse", "--show-prefix")
 
-    if ($topLevel) {
+    if ($null -ne $prefix) {
 
-        if (-not (Test-SamePath $topLevel $Path)) {
+        if ($prefix -ne "") {
+            $topLevel = Invoke-GitQuery `
+                -RepositoryPath $Path `
+                -Arguments @("rev-parse", "--show-toplevel")
             $suggested = [System.IO.Path]::GetFullPath($topLevel)
+
             throw "Target must be the root of a Git repository. Copilot only reads .github/ from the repository root. Repository root: $suggested"
         }
 

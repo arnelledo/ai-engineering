@@ -99,6 +99,16 @@ When replacing legacy behavior, preserve observable business behavior unless an 
 
 Different implementation structure is acceptable when behavior remains equivalent.
 
+## Planned Tasks
+
+When the work is a planned task (`T-NN-NN`):
+
+- implement only that task, within its requirements, `SPEC.md`, and the accepted ADRs;
+- if a gap appears, stop and report it as a proposed question instead of assuming;
+- if the change exceeds the task size limit, stop and propose how to split the task. The default limit is about 1,000 lines of production code, unless `.ai/project.md` defines another. Tests and generated code do not count;
+- update the task's status in `TASKS.md` in the same change;
+- add a package or abstraction only when this task needs it.
+
 ## Active Task Context
 
 For significant work, update the relevant `.ai/tasks/` document when useful with:

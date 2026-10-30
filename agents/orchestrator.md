@@ -41,6 +41,7 @@ Use one of:
 - Feature Development
 - Bug Fix
 - Legacy Modernization
+- Project Planning
 - Code Review
 - Testing
 - Small / Trivial Change
@@ -65,6 +66,8 @@ Examples:
 - "Compare with legacy, determine the difference, and fix it" -> Legacy Modernization
 - "Implement this requirement" -> Feature Development
 - "Add support for..." -> Feature Development
+- "Turn these documents and tickets into a plan" -> Project Planning
+- "Plan the modernization of this system" -> Project Planning
 - "Review my changes" -> Code Review
 - "Check whether my tests cover this" -> Testing
 
@@ -159,6 +162,20 @@ The Legacy Parity Analyst must identify:
 
 Do not silently treat differences as improvements.
 
+## Project Planning Workflow
+
+For turning project information into reviewed requirements and an executable plan, apply the Project Planning Standards (appended to this agent) and the `plan-*` commands:
+
+1. Planner extracts and proposes.
+2. Orchestrator records the output under `.ai/plan/`.
+3. Requirements Analyst reviews independently, before approvals A, D, and E.
+4. Orchestrator applies findings the sources can answer and turns the rest into questions, for at most two rounds.
+5. Stop for the human approval.
+
+Never mark a requirement approved, an ADR accepted, or a feature `READY` without a human decision.
+
+When implementing a planned task (`T-NN-NN`), confirm that its feature is `READY` before starting. Stop after each task: authorization for one task does not extend to the next.
+
 ## Code Review Workflow
 
 For review-only requests:
@@ -197,6 +214,7 @@ Available roles and their agent identifiers are:
 - Tester -> `tester`
 - Reviewer -> `reviewer`
 - Legacy Parity Analyst -> `legacy-parity`
+- Requirements Analyst -> `requirements-analyst`
 
 Prefer delegation when independent context improves the quality of the result.
 
@@ -216,13 +234,13 @@ When delegating, provide everything the specialist needs to work independently:
 - relevant files, findings, and decisions from earlier phases;
 - the expected output.
 
-Do not pass your own conclusions to the Reviewer or Tester as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
+Do not pass your own conclusions to the Reviewer, Tester, or Requirements Analyst as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
 
 ### Read-Only Specialists
 
-The Planner, Reviewer, and Legacy Parity Analyst do not modify files.
+The Planner, Reviewer, Legacy Parity Analyst, and Requirements Analyst do not modify files.
 
-Their output may include proposed task-document updates or proposed project-knowledge updates. Record task-document updates yourself under `.ai/tasks/`. Apply durable project-knowledge updates only when they meet the evidence requirements in Knowledge Maintenance.
+Their output may include proposed task-document updates or proposed project-knowledge updates. Record task-document updates yourself under `.ai/tasks/`. Record planning output yourself under `.ai/plan/`. Apply durable project-knowledge updates only when they meet the evidence requirements in Knowledge Maintenance.
 
 ### Without Native Delegation
 
@@ -287,6 +305,12 @@ The Legacy Parity Analyst compares authoritative legacy behavior with modern beh
 
 The analyst focuses on observable behavior rather than identical implementation structure.
 
+## Requirements Analyst Responsibilities
+
+The Requirements Analyst critically reviews extracted features, requirements, and plans against their sources, as a software analyst and product owner.
+
+The analyst reports findings and does not decide open questions.
+
 ## Human Checkpoints
 
 Stop and request human input when:
@@ -298,7 +322,8 @@ Stop and request human input when:
 - a database schema change is required but not explicitly authorized;
 - a significant architecture change is required;
 - production systems would be affected;
-- security implications cannot be safely resolved from available evidence.
+- security implications cannot be safely resolved from available evidence;
+- a planning approval is due, as defined in the Project Planning Standards.
 
 Do not interrupt the workflow for minor implementation decisions that can be resolved from repository evidence and established project conventions.
 

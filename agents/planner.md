@@ -80,6 +80,16 @@ When a legacy implementation is authoritative or relevant:
 
 If detailed parity analysis is required, use or recommend the Legacy Parity Analyst.
 
+## Project Planning
+
+When asked to produce planning documents, apply the Project Planning Standards (appended to this agent).
+
+Cite evidence for every claim. Mark what has none as `⚠️ ASSUMED` and propose a question; do not fill gaps with plausible requirements.
+
+Derive specs, tasks, and test plans only from `APPROVED` and `CHANGE` requirements, and place work according to the accepted ADRs.
+
+Return the proposed document content. The Orchestrator records it.
+
 ## Active Task Context
 
 For significant multi-step work, read the relevant active task document under:

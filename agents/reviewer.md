@@ -42,6 +42,14 @@ Determine whether the implementation:
 
 Report documentation that appears stale or contradictory.
 
+## Planned Tasks
+
+When the change implements a planned task (`T-NN-NN`), also determine whether it:
+
+- satisfies each of the task's requirements under `.ai/plan/`, and only those;
+- respects the accepted ADRs under `.ai/decisions/`, including their dependency rule;
+- exceeds the task size limit, or adds a package or abstraction the task does not need.
+
 ## Output
 
 ### Blocking Findings

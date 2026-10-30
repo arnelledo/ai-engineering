@@ -53,6 +53,9 @@ not here.
 - `decisions/` - durable engineering decisions and rationale.
 - `tasks/` - active engineering context that must survive sessions.
 
+`plan/` is not created by the installer. `/plan-discover` creates it when a
+project needs reviewed requirements and a plan by phase and feature.
+
 ## Evidence
 
 Project documentation provides engineering context but may become outdated.
@@ -370,9 +373,9 @@ Use decision records when future engineers or AI agents may reasonably ask:
 
 Suggested naming:
 
-- `001-short-description.md`
-- `002-short-description.md`
-- `003-short-description.md`
+- `ADR-001-short-description.md`
+- `ADR-002-short-description.md`
+- `ADR-003-short-description.md`
 
 Suggested document structure:
 

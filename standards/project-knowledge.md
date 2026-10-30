@@ -20,6 +20,7 @@ Then inspect only the knowledge relevant to the task:
 - legacy behavior -> `.ai/legacy/`
 - previous engineering decisions -> `.ai/decisions/`
 - active or related work -> `.ai/tasks/`
+- planned features, requirements, and open questions -> `.ai/plan/`
 
 Do not load unrelated project knowledge unnecessarily.
 

@@ -54,6 +54,12 @@ Durable confirmed differences may later be documented under `.ai/legacy/`.
 
 Do not permanently document speculative parity conclusions.
 
+## Planned Work
+
+When `.ai/plan/` exists, identify behaviors by their `REQ-` IDs and evidence by their `SRC-` IDs.
+
+A `CHANGE` requirement is an approved intentional difference. Report behavior that differs from the legacy system without one as a DIFFERENCE, and propose a question.
+
 ## Output
 
 Report each significant behavior using the Parity Report format in the Legacy Parity Standards.

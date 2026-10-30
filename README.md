@@ -18,6 +18,8 @@ Understand → Investigate → Plan → Implement → Test → Review → Correc
 
 Legacy modernization adds explicit parity analysis before implementation.
 
+Larger projects can first turn documents, tickets, and legacy code into reviewed requirements and a plan by phase and feature. See [docs/planning.md](docs/planning.md).
+
 Consequential operations (production deployment, destructive database operations, pushing or merging, infrastructure changes) always require explicit human authorization. See `standards/human-control.md`.
 
 ## Quick Start
@@ -99,7 +101,7 @@ Adapters contain only harness-specific metadata, templates, and deployment logic
 
 The repository-wide instructions are assembled from `development.md`, `security.md`, `project-knowledge.md`, and `human-control.md`, in that order.
 
-Role-specific standards are appended to the agents that need them: `testing.md` to the tester, `review.md` to the reviewer, and `legacy-parity.md` to the legacy parity analyst.
+Role-specific standards are appended to the agents that need them: `testing.md` to the tester, `review.md` to the reviewer, `legacy-parity.md` to the legacy parity analyst, `requirements-quality.md` to the requirements analyst, and `planning.md` to the orchestrator, planner, legacy parity analyst, and requirements analyst.
 
 `project-knowledge.md` must reach every agent. GitHub Copilot appends it to every agent, because Copilot subagents may not receive the repository-wide instructions. Claude Code loads `.claude/rules/` into every subagent, so it is not duplicated there.
 
@@ -117,10 +119,11 @@ The installer refuses to run if a standard is not delivered anywhere. When addin
 | `tester` | Performs adversarial verification and writes tests | read, search, edit, execute, todo | Yes |
 | `reviewer` | Independently evaluates correctness, risk, business behavior, architecture, security, and test quality | read, search | No |
 | `legacy-parity` | Compares modern behavior against authoritative legacy behavior | read, search | No |
+| `requirements-analyst` | Critically reviews extracted features, requirements, and plans against their sources | read, search | No |
 
 Role boundaries are enforced by each harness's tool restrictions, not only by instructions.
 
-Only the Orchestrator can invoke other agents, and only the five specialists. Each specialist runs with its own context and tools, which keeps implementation and review independent. Read-only specialists return proposed task-document updates; the Orchestrator records them under `.ai/tasks/`.
+Only the Orchestrator can invoke other agents, and only the six specialists. Each specialist runs with its own context and tools, which keeps implementation and review independent. Read-only specialists return proposed updates; the Orchestrator records them under `.ai/tasks/` or `.ai/plan/`.
 
 Each adapter translates the capabilities into harness tool names:
 
@@ -142,6 +145,10 @@ Each adapter translates the capabilities into harness tool names:
 | `/feature` | `workflows/feature.md` | orchestrator | Non-trivial feature development |
 | `/bug-fix` | `workflows/bug-fix.md` | orchestrator | Root-cause investigation, regression test, fix, review |
 | `/migration` | `workflows/migration.md` | orchestrator | Legacy modernization with explicit parity verification |
+| `/plan-discover` | `workflows/plan-discover.md` | orchestrator | Register sources, extract and review the feature inventory |
+| `/plan-roadmap` | `workflows/plan-roadmap.md` | orchestrator | Propose phases, starting with Foundation |
+| `/plan-next` | `workflows/plan-next.md` | orchestrator | Produce and review the next planning document of a feature |
+| `/plan-add-source` | `workflows/plan-add-source.md` | orchestrator | Add a late source and flag what it affects |
 | `/bootstrap-knowledge` | `prompts/bootstrap-knowledge.md` | orchestrator | Initial, evidence-driven population of `.ai/` |
 | `/investigate` | `prompts/investigate.md` | planner | Investigate a problem without modifying code |
 | `/test` | `prompts/test.md` | tester | Adversarial testing of an implementation |
@@ -192,7 +199,7 @@ Claude Code runs in the terminal, the VS Code Claude Code panel, or the Code tab
 
 ### Command Behavior
 
-- The orchestrator commands (`/feature`, `/bug-fix`, `/migration`, `/bootstrap-knowledge`) run in the main conversation, so the Orchestrator can ask you questions at its human checkpoints.
+- The orchestrator commands (`/feature`, `/bug-fix`, `/migration`, `/plan-*`, `/bootstrap-knowledge`) run in the main conversation, so the Orchestrator can ask you questions at its human checkpoints.
 - The specialist commands run in their subagent (`context: fork`) with that subagent's tool restrictions. A forked subagent does not see the conversation, so describe the task after the command.
 - `/code-review` inserts the current `git status` and diffs before it runs, so the read-only reviewer sees the changes without shell access. This needs a local session; injected commands do not run in Cowork or cloud sessions.
 - All commands run only when typed (`disable-model-invocation: true`).
@@ -216,10 +223,11 @@ Application-specific knowledge lives in the application repository, never in thi
 ├── integrations/      external systems and messaging
 ├── legacy/            authoritative legacy behavior and parity
 ├── decisions/         engineering decisions and rationale
+├── plan/              requirements and plan, created by /plan-discover when needed
 └── tasks/             active task context across sessions and agents
 ```
 
-The installer scaffolds these files once and never overwrites them. How agents use, verify, and maintain this knowledge is defined in `standards/project-knowledge.md`. Do not store secrets in framework or project-knowledge documentation.
+The installer scaffolds these files once and never overwrites them, except `plan/`, which it does not create. How agents use, verify, and maintain this knowledge is defined in `standards/project-knowledge.md`. Do not store secrets in framework or project-knowledge documentation.
 
 ## Testing the Installer
 

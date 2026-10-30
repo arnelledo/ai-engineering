@@ -252,9 +252,14 @@ $CopilotFiles = @(
     ".github/agents/tester.agent.md",
     ".github/agents/reviewer.agent.md",
     ".github/agents/legacy-parity.agent.md",
+    ".github/agents/requirements-analyst.agent.md",
     ".github/prompts/feature.prompt.md",
     ".github/prompts/bug-fix.prompt.md",
     ".github/prompts/migration.prompt.md",
+    ".github/prompts/plan-discover.prompt.md",
+    ".github/prompts/plan-roadmap.prompt.md",
+    ".github/prompts/plan-next.prompt.md",
+    ".github/prompts/plan-add-source.prompt.md",
     ".github/prompts/review.prompt.md",
     ".github/prompts/investigate.prompt.md",
     ".github/prompts/test.prompt.md",
@@ -270,9 +275,14 @@ $ClaudeFiles = @(
     ".claude/agents/tester.md",
     ".claude/agents/reviewer.md",
     ".claude/agents/legacy-parity.md",
+    ".claude/agents/requirements-analyst.md",
     ".claude/skills/feature/SKILL.md",
     ".claude/skills/bug-fix/SKILL.md",
     ".claude/skills/migration/SKILL.md",
+    ".claude/skills/plan-discover/SKILL.md",
+    ".claude/skills/plan-roadmap/SKILL.md",
+    ".claude/skills/plan-next/SKILL.md",
+    ".claude/skills/plan-add-source/SKILL.md",
     ".claude/skills/code-review/SKILL.md",
     ".claude/skills/investigate/SKILL.md",
     ".claude/skills/test/SKILL.md",
@@ -337,9 +347,12 @@ try {
 
     $orchestrator = Read-RepoFile $copilot ".github/agents/orchestrator.agent.md"
     Assert-True ($orchestrator.Contains("tools: ['read', 'search', 'edit', 'execute', 'agent', 'todo']")) "orchestrator Copilot tools (no harness-specific extras)"
-    Assert-True ($orchestrator.Contains("agents: ['planner', 'developer', 'tester', 'reviewer', 'legacy-parity']")) "orchestrator subagent list"
+    Assert-True ($orchestrator.Contains("agents: ['planner', 'developer', 'tester', 'reviewer', 'legacy-parity', 'requirements-analyst']")) "orchestrator subagent list"
     Assert-True ((Read-RepoFile $copilot ".github/agents/reviewer.agent.md").Contains("tools: ['read', 'search']")) "reviewer is read-only"
     Assert-True ((Read-RepoFile $copilot ".github/agents/reviewer.agent.md").Contains("## Project Knowledge Standards")) "Copilot agents include the shared standard"
+    Assert-True ((Read-RepoFile $copilot ".github/agents/requirements-analyst.agent.md").Contains("tools: ['read', 'search']")) "requirements analyst is read-only"
+    Assert-True ((Read-RepoFile $copilot ".github/agents/requirements-analyst.agent.md").Contains("## Requirements Quality Standards")) "requirements analyst includes its standard"
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $copilot ".ai/plan"))) "installer does not create .ai/plan"
 
     # -----------------------------------------------------------------------
     Write-TestHeader "GitHub Copilot: idempotent re-run"
@@ -363,7 +376,7 @@ try {
 
     $orchestrator = Read-RepoFile $claude ".claude/agents/orchestrator.md"
     Assert-True ($orchestrator.Contains("name: orchestrator")) "agent has name"
-    Assert-True ($orchestrator.Contains("Agent(planner, developer, tester, reviewer, legacy-parity)")) "orchestrator subagent allowlist"
+    Assert-True ($orchestrator.Contains("Agent(planner, developer, tester, reviewer, legacy-parity, requirements-analyst)")) "orchestrator subagent allowlist"
     Assert-True ($orchestrator.Contains("AskUserQuestion")) "orchestrator can ask the user"
 
     $reviewer = Read-RepoFile $claude ".claude/agents/reviewer.md"
@@ -371,6 +384,22 @@ try {
     Assert-True ($reviewer.Contains("## Code Review Standards")) "reviewer includes its role standard"
     Assert-True (-not $reviewer.Contains("## Project Knowledge Standards")) "shared standard delivered via rules, not duplicated"
     Assert-True ((Read-RepoFile $claude ".claude/rules/ai-engineering.md").Contains("## Project Knowledge Standards")) "rules include the shared standard"
+
+    $analyst = Read-RepoFile $claude ".claude/agents/requirements-analyst.md"
+    Assert-True ($analyst.Contains("tools: Read, Grep, Glob`n")) "requirements analyst is read-only"
+    Assert-True ($analyst.Contains("## Requirements Quality Standards") -and $analyst.Contains("## Project Planning Standards")) "requirements analyst includes its standards"
+
+    foreach ($agentName in @("orchestrator", "planner", "legacy-parity")) {
+        Assert-True ((Read-RepoFile $claude ".claude/agents/$agentName.md").Contains("## Project Planning Standards")) "$agentName includes the planning standard"
+    }
+    Assert-True (-not (Read-RepoFile $claude ".claude/agents/developer.md").Contains("## Project Planning Standards")) "developer does not embed the planning standard"
+    Assert-True (-not (Read-RepoFile $claude ".claude/rules/ai-engineering.md").Contains("## Project Planning Standards")) "planning standard not in the repository-wide rules"
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $claude ".ai/plan"))) "installer does not create .ai/plan"
+
+    foreach ($commandName in @("plan-discover", "plan-roadmap", "plan-next", "plan-add-source")) {
+        $plan = Read-RepoFile $claude ".claude/skills/$commandName/SKILL.md"
+        Assert-True ((-not $plan.Contains("context: fork")) -and $plan.Contains("disable-model-invocation: true") -and $plan.Contains('$ARGUMENTS')) "/$commandName runs explicitly in the main conversation"
+    }
 
     $review = Read-RepoFile $claude ".claude/skills/code-review/SKILL.md"
     Assert-True ($review.Contains("context: fork") -and $review.Contains("agent: reviewer")) "/code-review runs in the reviewer"

@@ -17,7 +17,7 @@
 #   todo    - manage a task list
 #   ask     - ask the user structured questions
 #
-# Read-only roles (planner, reviewer, legacy-parity) deliberately receive no
+# Read-only roles (planner, reviewer, legacy-parity, requirements-analyst) deliberately receive no
 # edit or execute capability, so "do not modify code" is enforced by the
 # harness rather than by instructions alone.
 #
@@ -44,10 +44,11 @@
     Agents = @(
         @{
             Name         = 'orchestrator'
-            Description  = 'Coordinates non-trivial engineering work across planning, implementation, testing, review, and legacy parity analysis.'
+            Description  = 'Coordinates non-trivial engineering work across project planning, implementation, testing, review, and legacy parity analysis.'
             ArgumentHint = 'Describe the task, defect, or requirement'
             Tools        = @('read', 'search', 'edit', 'execute', 'agent', 'todo', 'ask')
-            Agents       = @('planner', 'developer', 'tester', 'reviewer', 'legacy-parity')
+            Agents       = @('planner', 'developer', 'tester', 'reviewer', 'legacy-parity', 'requirements-analyst')
+            Standards    = @('planning.md')
         }
 
         @{
@@ -55,6 +56,7 @@
             Description  = 'Investigates software changes and produces implementation plans without modifying production code.'
             ArgumentHint = 'Describe the change or problem to plan'
             Tools        = @('read', 'search', 'web')
+            Standards    = @('planning.md')
         }
 
         @{
@@ -85,7 +87,15 @@
             Description  = 'Compares modern implementations against authoritative legacy behavior and identifies parity differences.'
             ArgumentHint = 'Name the behavior to compare against the legacy implementation'
             Tools        = @('read', 'search')
-            Standards    = @('legacy-parity.md')
+            Standards    = @('legacy-parity.md', 'planning.md')
+        }
+
+        @{
+            Name         = 'requirements-analyst'
+            Description  = 'Critically reviews extracted features, requirements, and plans against their sources, as a software analyst and product owner.'
+            ArgumentHint = 'Name the inventory, requirements, or feature package to review'
+            Tools        = @('read', 'search')
+            Standards    = @('requirements-quality.md', 'planning.md')
         }
     )
 
@@ -103,7 +113,7 @@
             Source       = 'workflows/feature.md'
             Agent        = 'orchestrator'
             Description  = 'Implement a non-trivial feature using the framework feature-development workflow.'
-            ArgumentHint = 'Describe the feature or requirement to implement'
+            ArgumentHint = 'Describe the feature or requirement to implement, or name a planned task (T-NN-NN)'
         }
 
         @{
@@ -119,7 +129,39 @@
             Source       = 'workflows/migration.md'
             Agent        = 'orchestrator'
             Description  = 'Modernize legacy behavior while explicitly verifying behavioral parity.'
-            ArgumentHint = 'Name the legacy behavior to modernize and where the legacy source is'
+            ArgumentHint = 'Name the legacy behavior to modernize and where the legacy source is, or name a planned task (T-NN-NN)'
+        }
+
+        @{
+            Name         = 'plan-discover'
+            Source       = 'workflows/plan-discover.md'
+            Agent        = 'orchestrator'
+            Description  = 'Register project sources, extract and review the feature inventory, and surface open questions.'
+            ArgumentHint = 'Name the sources: documents, tickets, and any legacy code location'
+        }
+
+        @{
+            Name         = 'plan-roadmap'
+            Source       = 'workflows/plan-roadmap.md'
+            Agent        = 'orchestrator'
+            Description  = 'Propose the phased roadmap from the approved feature inventory, starting with Foundation.'
+            ArgumentHint = 'Optional: priorities or constraints for the order of work'
+        }
+
+        @{
+            Name         = 'plan-next'
+            Source       = 'workflows/plan-next.md'
+            Agent        = 'orchestrator'
+            Description  = 'Produce the next planning document for a feature, have it reviewed, and stop for approval.'
+            ArgumentHint = 'Optional: the feature (F-NN). Defaults to the next feature in the roadmap'
+        }
+
+        @{
+            Name         = 'plan-add-source'
+            Source       = 'workflows/plan-add-source.md'
+            Agent        = 'orchestrator'
+            Description  = 'Register a new source in an existing plan and flag the requirements and features it affects.'
+            ArgumentHint = 'Name the new document, ticket export, or legacy location'
         }
 
         @{

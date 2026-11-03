@@ -101,9 +101,9 @@ Adapters contain only harness-specific metadata, templates, and deployment logic
 
 The repository-wide instructions are assembled from `development.md`, `security.md`, `project-knowledge.md`, and `human-control.md`, in that order.
 
-Role-specific standards are appended to the agents that need them: `testing.md` to the tester, `review.md` to the reviewer, `legacy-parity.md` to the legacy parity analyst, `requirements-quality.md` to the requirements analyst, and `planning.md` to the orchestrator, planner, legacy parity analyst, and requirements analyst.
+Role-specific standards are appended to the agents that need them: `testing.md` to the tester, `review.md` to the reviewer, `security-review.md` and `review.md` to the security reviewer, `legacy-parity.md` to the legacy parity analyst, `requirements-quality.md` to the requirements analyst, and `planning.md` to the orchestrator, planner, legacy parity analyst, and requirements analyst.
 
-`project-knowledge.md` must reach every agent. GitHub Copilot appends it to every agent, because Copilot subagents may not receive the repository-wide instructions. Claude Code loads `.claude/rules/` into every subagent, so it is not duplicated there.
+`project-knowledge.md` and `security.md` must reach every agent. GitHub Copilot appends them to every agent, because Copilot subagents may not receive the repository-wide instructions. Claude Code loads `.claude/rules/` into every subagent, so they are not duplicated there.
 
 Agent files contain only role-specific guidance and refer to the appended standards. Severity levels, finding format, review verdicts, test scenarios, and parity classifications are defined only in `standards/`.
 
@@ -118,12 +118,13 @@ The installer refuses to run if a standard is not delivered anywhere. When addin
 | `developer` | Implements the smallest correct change | read, search, edit, execute, todo | Yes |
 | `tester` | Performs adversarial verification and writes tests | read, search, edit, execute, todo | Yes |
 | `reviewer` | Independently evaluates correctness, risk, business behavior, architecture, security, and test quality | read, search | No |
+| `security-reviewer` | Independently reviews security-sensitive changes by tracing untrusted input and checking authorization | read, search | No |
 | `legacy-parity` | Compares modern behavior against authoritative legacy behavior | read, search | No |
 | `requirements-analyst` | Critically reviews extracted features, requirements, and plans against their sources | read, search | No |
 
 Role boundaries are enforced by each harness's tool restrictions, not only by instructions.
 
-Only the Orchestrator can invoke other agents, and only the six specialists. Each specialist runs with its own context and tools, which keeps implementation and review independent. Read-only specialists return proposed updates; the Orchestrator records them under `.ai/tasks/` or `.ai/plan/`.
+Only the Orchestrator can invoke other agents, and only the seven specialists. Each specialist runs with its own context and tools, which keeps implementation and review independent. Read-only specialists return proposed updates; the Orchestrator records them under `.ai/tasks/` or `.ai/plan/`.
 
 Each adapter translates the capabilities into harness tool names:
 

@@ -27,6 +27,8 @@ Use the Reviewer role.
 
 Prioritize correctness and risk over style.
 
+When the change is security-sensitive, as defined in the Security Standards, state so in the report and recommend an independent review by the Security Reviewer.
+
 ## Phase 4 — Validate Tests
 
 Determine whether tests demonstrate intended behavior and relevant failure scenarios.

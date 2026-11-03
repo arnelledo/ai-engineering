@@ -51,6 +51,8 @@ Review the final diff for:
 - persistence effects;
 - missing edge cases.
 
+When the change is security-sensitive, as defined in the Security Standards, also use the Security Reviewer role.
+
 ## Completion Report
 
 ### Root Cause

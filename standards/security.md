@@ -76,6 +76,21 @@ Do not introduce dependencies with unnecessary privileges or capabilities.
 
 Do not upgrade security-sensitive packages casually as part of unrelated tasks.
 
+## Security-Sensitive Changes
+
+A change is security-sensitive when it adds or changes:
+
+- authentication, sessions, or tokens;
+- authorization rules or the boundaries that enforce them;
+- handling of external input, including file uploads and deserialization;
+- SQL, shell, path, or template construction from data;
+- secrets, keys, or cryptography;
+- external calls that carry credentials or trusted data;
+- a dependency, or a dependency upgrade;
+- infrastructure, network exposure, or permissions.
+
+Security-sensitive changes receive an independent security review in addition to the normal review.
+
 ## Security Findings
 
 Do not label theoretical issues as exploitable vulnerabilities without evidence.

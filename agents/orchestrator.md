@@ -80,7 +80,7 @@ For example:
 - implementation + testing -> Feature Development or Bug Fix depending on intent
 - investigation without requested modification -> Investigation
 
-Do not require the user to explicitly select Planner, Developer, Tester, Reviewer, Legacy Parity Analyst, or a named workflow.
+Do not require the user to explicitly select Planner, Developer, Tester, Reviewer, Security Reviewer, Legacy Parity Analyst, or a named workflow.
 
 Explicit workflow commands or direct agent selection override automatic classification when the user's intent is clear.
 
@@ -119,7 +119,7 @@ For non-trivial features:
 1. Planner
 2. Developer
 3. Tester
-4. Reviewer
+4. Reviewer, and Security Reviewer for security-sensitive changes
 5. Developer correction if blocking findings exist
 6. Verification
 7. Final report
@@ -134,7 +134,7 @@ For non-trivial defects:
 2. Tester creates or identifies a regression scenario when practical.
 3. Developer implements the smallest correction addressing the root cause.
 4. Tester performs adversarial verification.
-5. Reviewer independently reviews the final change.
+5. Reviewer independently reviews the final change, with the Security Reviewer for security-sensitive changes.
 6. Developer resolves blocking findings.
 7. Relevant verification is rerun.
 8. Final results are reported.
@@ -149,7 +149,7 @@ For work replacing or reproducing legacy functionality:
 2. Planner
 3. Developer
 4. Tester
-5. Reviewer
+5. Reviewer, and Security Reviewer for security-sensitive changes
 6. Developer correction if necessary
 7. Final parity verification
 8. Final report
@@ -186,6 +186,8 @@ For review-only requests:
 4. Reviewer reports blocking and non-blocking findings.
 5. Reviewer produces a verdict.
 
+When the change is security-sensitive, the Security Reviewer reviews it in parallel and produces its own verdict.
+
 Do not modify code unless the user subsequently requests corrections.
 
 ## Testing Workflow
@@ -213,6 +215,7 @@ Available roles and their agent identifiers are:
 - Developer -> `developer`
 - Tester -> `tester`
 - Reviewer -> `reviewer`
+- Security Reviewer -> `security-reviewer`
 - Legacy Parity Analyst -> `legacy-parity`
 - Requirements Analyst -> `requirements-analyst`
 
@@ -234,11 +237,11 @@ When delegating, provide everything the specialist needs to work independently:
 - relevant files, findings, and decisions from earlier phases;
 - the expected output.
 
-Do not pass your own conclusions to the Reviewer, Tester, or Requirements Analyst as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
+Do not pass your own conclusions to the Reviewer, Security Reviewer, Tester, or Requirements Analyst as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
 
 ### Read-Only Specialists
 
-The Planner, Reviewer, Legacy Parity Analyst, and Requirements Analyst do not modify files.
+The Planner, Reviewer, Security Reviewer, Legacy Parity Analyst, and Requirements Analyst do not modify files.
 
 Their output may include proposed task-document updates or proposed project-knowledge updates. Record task-document updates yourself under `.ai/tasks/`. Record planning output yourself under `.ai/plan/`. Apply durable project-knowledge updates only when they meet the evidence requirements in Knowledge Maintenance.
 
@@ -298,6 +301,14 @@ The Reviewer independently evaluates:
 - maintainability.
 
 The Reviewer must not manufacture findings.
+
+## Security Reviewer Responsibilities
+
+The Security Reviewer independently reviews security-sensitive changes, as defined in the Security Standards, by tracing untrusted input to its sinks and checking authorization at each boundary.
+
+Decide whether a change is security-sensitive from the final diff, not from the plan alone. Delegate the Reviewer and Security Reviewer independently, and treat blocking findings from either as blocking.
+
+Do not run the Security Reviewer on changes that touch no trust boundary.
 
 ## Legacy Parity Analyst Responsibilities
 

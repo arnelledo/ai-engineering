@@ -251,6 +251,7 @@ $CopilotFiles = @(
     ".github/agents/developer.agent.md",
     ".github/agents/tester.agent.md",
     ".github/agents/reviewer.agent.md",
+    ".github/agents/security-reviewer.agent.md",
     ".github/agents/legacy-parity.agent.md",
     ".github/agents/requirements-analyst.agent.md",
     ".github/prompts/feature.prompt.md",
@@ -274,6 +275,7 @@ $ClaudeFiles = @(
     ".claude/agents/developer.md",
     ".claude/agents/tester.md",
     ".claude/agents/reviewer.md",
+    ".claude/agents/security-reviewer.md",
     ".claude/agents/legacy-parity.md",
     ".claude/agents/requirements-analyst.md",
     ".claude/skills/feature/SKILL.md",
@@ -347,9 +349,13 @@ try {
 
     $orchestrator = Read-RepoFile $copilot ".github/agents/orchestrator.agent.md"
     Assert-True ($orchestrator.Contains("tools: ['read', 'search', 'edit', 'execute', 'agent', 'todo']")) "orchestrator Copilot tools (no harness-specific extras)"
-    Assert-True ($orchestrator.Contains("agents: ['planner', 'developer', 'tester', 'reviewer', 'legacy-parity', 'requirements-analyst']")) "orchestrator subagent list"
+    Assert-True ($orchestrator.Contains("agents: ['planner', 'developer', 'tester', 'reviewer', 'security-reviewer', 'legacy-parity', 'requirements-analyst']")) "orchestrator subagent list"
     Assert-True ((Read-RepoFile $copilot ".github/agents/reviewer.agent.md").Contains("tools: ['read', 'search']")) "reviewer is read-only"
     Assert-True ((Read-RepoFile $copilot ".github/agents/reviewer.agent.md").Contains("## Project Knowledge Standards")) "Copilot agents include the shared standard"
+    Assert-True ((Read-RepoFile $copilot ".github/agents/reviewer.agent.md").Contains("## Security Standards")) "Copilot reviewer includes the security standard"
+    $securityReviewer = Read-RepoFile $copilot ".github/agents/security-reviewer.agent.md"
+    Assert-True ($securityReviewer.Contains("tools: ['read', 'search']")) "security reviewer is read-only"
+    Assert-True ($securityReviewer.Contains("## Security Review Standards") -and $securityReviewer.Contains("## Code Review Standards") -and $securityReviewer.Contains("## Security Standards")) "security reviewer includes its standards"
     Assert-True ((Read-RepoFile $copilot ".github/agents/requirements-analyst.agent.md").Contains("tools: ['read', 'search']")) "requirements analyst is read-only"
     Assert-True ((Read-RepoFile $copilot ".github/agents/requirements-analyst.agent.md").Contains("## Requirements Quality Standards")) "requirements analyst includes its standard"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $copilot ".ai/plan"))) "installer does not create .ai/plan"
@@ -376,7 +382,7 @@ try {
 
     $orchestrator = Read-RepoFile $claude ".claude/agents/orchestrator.md"
     Assert-True ($orchestrator.Contains("name: orchestrator")) "agent has name"
-    Assert-True ($orchestrator.Contains("Agent(planner, developer, tester, reviewer, legacy-parity, requirements-analyst)")) "orchestrator subagent allowlist"
+    Assert-True ($orchestrator.Contains("Agent(planner, developer, tester, reviewer, security-reviewer, legacy-parity, requirements-analyst)")) "orchestrator subagent allowlist"
     Assert-True ($orchestrator.Contains("AskUserQuestion")) "orchestrator can ask the user"
     Assert-True ($orchestrator.Contains("TaskCreate, TaskGet, TaskList, TaskUpdate, TodoWrite")) "orchestrator can use either task-tracking toolset"
 
@@ -385,6 +391,11 @@ try {
     Assert-True ($reviewer.Contains("## Code Review Standards")) "reviewer includes its role standard"
     Assert-True (-not $reviewer.Contains("## Project Knowledge Standards")) "shared standard delivered via rules, not duplicated"
     Assert-True ((Read-RepoFile $claude ".claude/rules/ai-engineering.md").Contains("## Project Knowledge Standards")) "rules include the shared standard"
+
+    $securityReviewer = Read-RepoFile $claude ".claude/agents/security-reviewer.md"
+    Assert-True ($securityReviewer.Contains("tools: Read, Grep, Glob`n")) "security reviewer is read-only"
+    Assert-True ($securityReviewer.Contains("## Security Review Standards") -and $securityReviewer.Contains("## Code Review Standards")) "security reviewer includes its role standards"
+    Assert-True (-not $securityReviewer.Contains("## Security Standards")) "security standard delivered via rules, not duplicated"
 
     $analyst = Read-RepoFile $claude ".claude/agents/requirements-analyst.md"
     Assert-True ($analyst.Contains("tools: Read, Grep, Glob`n")) "requirements analyst is read-only"

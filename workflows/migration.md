@@ -70,7 +70,7 @@ Add tests for:
 
 ## Phase 8 — Independent Review
 
-Use the Reviewer role.
+Use the Reviewer role, and the Security Reviewer role when the change is security-sensitive, as defined in the Security Standards.
 
 Review with particular attention to:
 

@@ -58,6 +58,8 @@ Use the Reviewer role.
 
 Review the final diff independently.
 
+When the change is security-sensitive, as defined in the Security Standards, also use the Security Reviewer role.
+
 ## Phase 6 — Correct
 
 Resolve blocking findings.

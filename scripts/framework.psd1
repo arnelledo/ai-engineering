@@ -17,9 +17,10 @@
 #   todo    - manage a task list
 #   ask     - ask the user structured questions
 #
-# Read-only roles (planner, reviewer, legacy-parity, requirements-analyst) deliberately receive no
-# edit or execute capability, so "do not modify code" is enforced by the
-# harness rather than by instructions alone.
+# Read-only roles (planner, reviewer, security-reviewer, legacy-parity,
+# requirements-analyst) deliberately receive no edit or execute capability, so
+# "do not modify code" is enforced by the harness rather than by instructions
+# alone.
 #
 # Standards lists the role-specific canonical standards delivered with the
 # agent. SharedAgentStandards are delivered to every agent by harnesses
@@ -37,6 +38,7 @@
 
     SharedAgentStandards = @(
         'project-knowledge.md'
+        'security.md'
     )
 
     # Order matters: it is the generation order and the order of the
@@ -47,7 +49,7 @@
             Description  = 'Coordinates non-trivial engineering work across project planning, implementation, testing, review, and legacy parity analysis.'
             ArgumentHint = 'Describe the task, defect, or requirement'
             Tools        = @('read', 'search', 'edit', 'execute', 'agent', 'todo', 'ask')
-            Agents       = @('planner', 'developer', 'tester', 'reviewer', 'legacy-parity', 'requirements-analyst')
+            Agents       = @('planner', 'developer', 'tester', 'reviewer', 'security-reviewer', 'legacy-parity', 'requirements-analyst')
             Standards    = @('planning.md')
         }
 
@@ -80,6 +82,14 @@
             ArgumentHint = 'Describe the change to review, or the requirement it should satisfy'
             Tools        = @('read', 'search')
             Standards    = @('review.md')
+        }
+
+        @{
+            Name         = 'security-reviewer'
+            Description  = 'Independently reviews security-sensitive changes by tracing untrusted input, trust boundaries, and authorization.'
+            ArgumentHint = 'Describe the change to review and the trust boundaries it touches'
+            Tools        = @('read', 'search')
+            Standards    = @('security-review.md', 'review.md')
         }
 
         @{

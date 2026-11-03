@@ -34,7 +34,8 @@ $ClaudeToolMap = @{
     edit    = @("Edit", "Write", "NotebookEdit")
     execute = @("Bash", "PowerShell")
     web     = @("WebFetch", "WebSearch")
-    todo    = @("TodoWrite")
+    # A session has the Task tools, or TodoWrite when CLAUDE_CODE_ENABLE_TASKS=0.
+    todo    = @("TaskCreate", "TaskGet", "TaskList", "TaskUpdate", "TodoWrite")
     ask     = @("AskUserQuestion")
     # agent is expanded per agent: Agent(<allowed subagents>)
 }

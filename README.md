@@ -135,7 +135,7 @@ Each adapter translates the capabilities into harness tool names:
 | execute | `execute` | `Bash`, `PowerShell` |
 | agent | `agent` + `agents: [...]` | `Agent(<allowed subagents>)` |
 | web | `web` | `WebFetch`, `WebSearch` |
-| todo | `todo` | `TodoWrite` |
+| todo | `todo` | `TaskCreate`, `TaskGet`, `TaskList`, `TaskUpdate`, `TodoWrite` |
 | ask | (not mapped) | `AskUserQuestion` |
 
 ## Commands

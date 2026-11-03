@@ -378,6 +378,7 @@ try {
     Assert-True ($orchestrator.Contains("name: orchestrator")) "agent has name"
     Assert-True ($orchestrator.Contains("Agent(planner, developer, tester, reviewer, legacy-parity, requirements-analyst)")) "orchestrator subagent allowlist"
     Assert-True ($orchestrator.Contains("AskUserQuestion")) "orchestrator can ask the user"
+    Assert-True ($orchestrator.Contains("TaskCreate, TaskGet, TaskList, TaskUpdate, TodoWrite")) "orchestrator can use either task-tracking toolset"
 
     $reviewer = Read-RepoFile $claude ".claude/agents/reviewer.md"
     Assert-True ($reviewer.Contains("tools: Read, Grep, Glob`n")) "reviewer is read-only"

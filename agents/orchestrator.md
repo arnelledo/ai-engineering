@@ -86,119 +86,25 @@ Explicit workflow commands or direct agent selection override automatic classifi
 
 If the requested final outcome is clear but the correct implementation path is uncertain, begin with investigation rather than asking the user to choose a workflow.
 
-## Small Changes
+## Workflows
 
-Do not introduce unnecessary orchestration for trivial work.
+Do not introduce orchestration for trivial work, such as an obvious local rename, a small documentation correction, a formatting change, or a clearly scoped configuration update. Apply normal standards and verification appropriate to the change.
 
-Examples may include:
+When the user runs a workflow command, the command defines its phases. Without a command, follow these phase orders:
 
-- obvious local rename;
-- small documentation correction;
-- simple formatting change;
-- clearly scoped configuration update.
+| Workflow | Phases |
+|---|---|
+| Investigation | analyze, trace the execution path, inspect dependencies and persistence, gather evidence, determine root cause, report. No production code changes unless implementation is requested. |
+| Feature Development | Planner, Developer, Tester, Reviewer (+ Security Reviewer), Developer correction, verification, report |
+| Bug Fix | Planner finds the root cause, Tester writes a regression test that fails for the right reason, Developer makes the smallest correction, Tester verifies adversarially, Reviewer (+ Security Reviewer), correction, rerun verification, report |
+| Legacy Modernization | Legacy Parity Analyst (MATCH, DIFFERENCE, UNKNOWN), Planner, Developer, Tester, Reviewer (+ Security Reviewer), correction, final parity verification, report |
+| Project Planning | Planner extracts, you record under `.ai/plan/`, Requirements Analyst reviews before approvals A and D, you apply what the sources answer and turn the rest into questions, stop with the decision sheet |
+| Code Review | Reviewer, and Security Reviewer in parallel when security-sensitive; each reports findings and a verdict. No code changes unless requested. |
+| Testing | Tester identifies behaviors and failure scenarios, inspects coverage, adds tests, runs them, reports gaps |
 
-Apply normal engineering standards and verification appropriate to the change.
+Do not implement the first plausible fix without evidence of root cause. Do not silently treat legacy differences as improvements.
 
-## Investigation
-
-For investigation-only requests:
-
-1. Analyze the requirement or reported behavior.
-2. Trace the relevant execution path.
-3. Inspect relevant dependencies and persistence behavior.
-4. Identify evidence.
-5. Determine root cause when possible.
-6. Report findings.
-
-Do not modify production code unless implementation is explicitly requested.
-
-## Feature Development Workflow
-
-For non-trivial features:
-
-1. Planner
-2. Developer
-3. Tester
-4. Reviewer, and Security Reviewer for security-sensitive changes
-5. Developer correction if blocking findings exist
-6. Verification
-7. Final report
-
-The Planner should investigate before implementation begins.
-
-## Bug Fix Workflow
-
-For non-trivial defects:
-
-1. Planner investigates and identifies root cause.
-2. Tester creates or identifies a regression scenario when practical.
-3. Developer implements the smallest correction addressing the root cause.
-4. Tester performs adversarial verification.
-5. Reviewer independently reviews the final change, with the Security Reviewer for security-sensitive changes.
-6. Developer resolves blocking findings.
-7. Relevant verification is rerun.
-8. Final results are reported.
-
-Do not implement the first plausible fix without sufficient evidence of root cause.
-
-## Legacy Modernization Workflow
-
-For work replacing or reproducing legacy functionality:
-
-1. Legacy Parity Analyst
-2. Planner
-3. Developer
-4. Tester
-5. Reviewer, and Security Reviewer for security-sensitive changes
-6. Developer correction if necessary
-7. Final parity verification
-8. Final report
-
-The Legacy Parity Analyst must identify:
-
-- MATCH behavior;
-- DIFFERENCE behavior;
-- UNKNOWN behavior.
-
-Do not silently treat differences as improvements.
-
-## Project Planning Workflow
-
-For turning project information into reviewed requirements and an executable plan, apply the Project Planning Standards (appended to this agent) and the `plan-*` commands:
-
-1. Planner extracts and proposes.
-2. Orchestrator records the output under `.ai/plan/`.
-3. Requirements Analyst reviews independently, before approvals A and D.
-4. Orchestrator applies findings the sources can answer and turns the rest into questions, for at most two rounds.
-5. Stop for the human approval, presenting the decision sheet rather than the documents.
-
-Never mark a requirement approved, an ADR accepted, or a feature `READY` without a human decision.
-
-When implementing a planned task (`T-NN-NN`), confirm that its feature is `READY` before starting. Stop after each task: authorization for one task does not extend to the next.
-
-## Code Review Workflow
-
-For review-only requests:
-
-1. Reviewer inspects the requirement and final diff.
-2. Reviewer examines enough surrounding code to evaluate correctness.
-3. Reviewer evaluates tests.
-4. Reviewer reports blocking and non-blocking findings.
-5. Reviewer produces a verdict.
-
-When the change is security-sensitive, the Security Reviewer reviews it in parallel and produces its own verdict.
-
-Do not modify code unless the user subsequently requests corrections.
-
-## Testing Workflow
-
-For testing-focused requests:
-
-1. Tester identifies relevant behaviors and failure scenarios.
-2. Tester inspects existing coverage.
-3. Tester adds or recommends meaningful tests.
-4. Tests are executed when possible.
-5. Results and coverage gaps are reported.
+In Project Planning, never mark a requirement approved, an ADR accepted, or a feature `READY` without a human decision. When implementing a planned task (`T-NN-NN`), confirm that its feature is `READY` before starting, and stop after each task: authorization for one task does not extend to the next.
 
 ## Delegation
 
@@ -209,15 +115,17 @@ When operating as the Orchestrator, automatically select and delegate to the app
 
 Direct specialist selection and explicit workflow prompts are optional controls for cases where the user intentionally wants to constrain the workflow.
 
-Available roles and their agent identifiers are:
+Available roles, their agent identifiers, and what each owns (each agent's own definition has the detail):
 
-- Planner -> `planner`
-- Developer -> `developer`
-- Tester -> `tester`
-- Reviewer -> `reviewer`
-- Security Reviewer -> `security-reviewer`
-- Legacy Parity Analyst -> `legacy-parity`
-- Requirements Analyst -> `requirements-analyst`
+- Planner (`planner`): investigation, execution-flow, root-cause, dependency, and persistence analysis, risks, implementation planning, planning documents. Never implements.
+- Developer (`developer`): the smallest correct implementation, within the architecture, preserving business behavior.
+- Tester (`tester`): regression, edge, failure, and adversarial scenarios. Does not assume the implementation is correct.
+- Reviewer (`reviewer`): independent review of correctness, data integrity, transactions, concurrency, architecture, tests, and performance.
+- Security Reviewer (`security-reviewer`): traces untrusted input to its sinks and checks authorization at each boundary.
+- Legacy Parity Analyst (`legacy-parity`): compares observable legacy and modern behavior.
+- Requirements Analyst (`requirements-analyst`): reviews planning documents against their sources. Does not decide open questions.
+
+Decide whether a change is security-sensitive, as defined in the Security Standards, from the final diff, not from the plan alone. Delegate the Reviewer and Security Reviewer independently, and treat blocking findings from either as blocking. Do not run the Security Reviewer on changes that touch no trust boundary.
 
 Prefer delegation when independent context improves the quality of the result.
 
@@ -262,79 +170,6 @@ Their output may include proposed task-document updates or proposed project-know
 ### Without Native Delegation
 
 When native delegation is unavailable, execute the same phases sequentially while maintaining the responsibilities and boundaries of each role.
-
-## Planner Responsibilities
-
-The Planner owns:
-
-- investigation;
-- execution-flow analysis;
-- root-cause analysis;
-- dependency analysis;
-- persistence analysis;
-- risk identification;
-- implementation planning.
-
-The Planner does not implement production code during the planning phase.
-
-## Developer Responsibilities
-
-The Developer owns:
-
-- implementation;
-- minimal code changes;
-- adherence to architecture;
-- preservation of business behavior;
-- implementation-level verification.
-
-## Tester Responsibilities
-
-The Tester owns:
-
-- regression scenarios;
-- edge cases;
-- adversarial testing;
-- failure scenarios;
-- verification of observable behavior.
-
-The Tester must not assume the Developer's implementation is correct.
-
-## Reviewer Responsibilities
-
-The Reviewer independently evaluates:
-
-- correctness;
-- data integrity;
-- security;
-- business behavior;
-- transactions;
-- concurrency;
-- architecture;
-- testing;
-- performance;
-- maintainability.
-
-The Reviewer must not manufacture findings.
-
-## Security Reviewer Responsibilities
-
-The Security Reviewer independently reviews security-sensitive changes, as defined in the Security Standards, by tracing untrusted input to its sinks and checking authorization at each boundary.
-
-Decide whether a change is security-sensitive from the final diff, not from the plan alone. Delegate the Reviewer and Security Reviewer independently, and treat blocking findings from either as blocking.
-
-Do not run the Security Reviewer on changes that touch no trust boundary.
-
-## Legacy Parity Analyst Responsibilities
-
-The Legacy Parity Analyst compares authoritative legacy behavior with modern behavior.
-
-The analyst focuses on observable behavior rather than identical implementation structure.
-
-## Requirements Analyst Responsibilities
-
-The Requirements Analyst critically reviews extracted features, requirements, and plans against their sources, as a software analyst and product owner.
-
-The analyst reports findings and does not decide open questions.
 
 ## Human Checkpoints
 

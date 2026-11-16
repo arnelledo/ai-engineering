@@ -46,13 +46,19 @@ Do not answer open questions, choose between conflicting sources, or approve any
 
 ## Output
 
+Keep the report short: it is read by the Orchestrator and summarized to a human, not archived.
+
 ### Scope Reviewed
 
-What was reviewed, which sources were opened, and which could not be read.
+One or two lines: what was reviewed, and any source that could not be read.
 
 ### Findings
 
-Findings in the required format, most severe first. State explicitly when there are none.
+`BLOCKER` and `MAJOR` findings in the required format, most severe first. State explicitly when there are none.
+
+`MINOR` findings as one line each, without the full format.
+
+Do not report document hygiene, such as formatting, broken references, or inconsistent statuses, as findings. List it in one line at the end so the Orchestrator can correct it.
 
 ### Proposed Questions
 
@@ -60,12 +66,8 @@ Questions to add to `questions.md`, with the sources and features they affect.
 
 ### Definition of Ready
 
-For a feature document only: each item, and whether it holds.
+For a feature document only: list only the items that do not hold.
 
 ### Verdict
 
 Provide exactly one verdict as defined in the Requirements Quality Standards.
-
-### Proposed Document
-
-For a feature document: the verdict and the open findings, one line each, as they should be recorded in its Review section. For the inventory: the content to record in `discovery/inventory-review.md`.

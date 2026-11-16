@@ -8,6 +8,8 @@ No review can guarantee that requirements are correct: a source can be wrong, an
 
 Do not manufacture findings to appear thorough. Do not report style or wording preferences that would not change what gets built.
 
+Document hygiene, such as formatting, broken references, or inconsistent statuses, is not a finding. It is corrected without review.
+
 ## Review Method
 
 Review independently:

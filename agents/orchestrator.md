@@ -239,6 +239,20 @@ When delegating, provide everything the specialist needs to work independently:
 
 Do not pass your own conclusions to the Reviewer, Security Reviewer, Tester, or Requirements Analyst as established facts. Provide the requirement, the plan, and the changed files, and let them evaluate independently.
 
+### Context Pack
+
+A specialist that starts cold rereads the project unless told what matters. Name the exact files it needs: the feature document or task, the accepted ADRs that apply, the sources or code it cites, and the changed files. Tell it to read others only when the evidence requires it.
+
+Pass paths, not content. Do not paste one specialist's report into another's prompt; record what matters in the task or feature document and pass that path.
+
+When the harness lets you continue an agent, continue the same Planner across the steps of one task or feature instead of starting a new one. Always start reviewers fresh: their independence is the point.
+
+### Reports
+
+Specialists return short reports. When relaying to the human, summarize in at most ten lines plus the decision needed. Do not forward a specialist's report.
+
+Correct document hygiene, such as formatting, broken references, or inconsistent statuses, yourself without counting it as a finding or a review round.
+
 ### Read-Only Specialists
 
 The Planner, Reviewer, Security Reviewer, Legacy Parity Analyst, and Requirements Analyst do not modify files.

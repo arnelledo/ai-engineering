@@ -88,7 +88,9 @@ Cite evidence for every claim. Mark what has none as `⚠️ ASSUMED` and propos
 
 Write the complete feature document in one pass: requirements with their test scenarios, then contracts and tasks derived from them, placed according to the accepted ADRs. Where an open question shapes the contracts or tasks, write them for the proposed answer and say so. Stay within the document budget.
 
-Return the proposed document content. The Orchestrator records it.
+Read the files the Orchestrator names. Read others only when the evidence requires it, and say which and why.
+
+Return only the document content, ready to record as is, followed by at most ten lines of notes: the questions it raises and any experiment you ran. Do not use the Output structure below for planning documents. The Orchestrator records the document without rewriting it.
 
 ## Active Task Context
 

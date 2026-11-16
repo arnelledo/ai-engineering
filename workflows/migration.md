@@ -4,7 +4,7 @@
 
 Apply this phase only when the request names a planned task (`T-NN-NN`). Otherwise, go to Phase 1.
 
-Read the task, its requirements, `SPEC.md`, its test scenarios, the accepted ADRs under `.ai/decisions/`, and `.ai/plan/sources.md`. The sources cited by the requirements identify the source of truth.
+Read the task's feature document, the accepted ADRs under `.ai/decisions/`, and `.ai/plan/sources.md`. The sources cited by the requirements identify the source of truth.
 
 If its feature is not `READY`, stop and report what is missing. Do not implement.
 
@@ -87,4 +87,4 @@ Produce an overall parity assessment.
 
 Any remaining DIFFERENCE or UNKNOWN item must be explicitly documented.
 
-For a planned task, update its status in `TASKS.md` in the same change, prepare the pull request description defined in the Project Planning Standards, and stop.
+For a planned task, update its status in the feature document in the same change, prepare the pull request description defined in the Project Planning Standards, and stop.

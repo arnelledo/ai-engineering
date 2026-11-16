@@ -6,8 +6,8 @@ Use it for work that needs a plan, usually several features or several developer
 
 Planning and implementation are separate:
 
-- **Planning (steps 1–5):** an agent extracts features and requirements with evidence, another reviews them critically, and a person resolves what is unclear and approves. No application code is written.
-- **Implementation (step 6):** any developer takes a ready task and implements it in one reviewable pull request.
+- **Planning (steps 1–4):** an agent extracts features and requirements with evidence, another reviews them critically, and a person resolves what is unclear and approves. No application code is written.
+- **Implementation (step 5):** any developer takes a ready task and implements it in one reviewable pull request.
 
 ## One Process, Two Situations
 
@@ -30,12 +30,15 @@ The steps and commands are the same. The difference follows from whether a legac
 | 0 | none | You | Sources in `docs-input/`, constraints in `.ai/project.md`, legacy access if any | |
 | 1 | `/plan-discover` | Agent, analyst, you | Sources, reviewed inventory, questions | A |
 | 2 | `/plan-roadmap` | Agent, you | Phases, Foundation first, and priorities | B |
-| 3 | `/plan-next F-00` | Agent, you | Architecture ADR, then Foundation tasks | C, E |
-| 4 | `/plan-next F-NN` | Agent, analyst, you | `REQUIREMENTS.md`, `REVIEW.md` | D |
-| 5 | `/plan-next F-NN` (three times) | Agent, analyst, you | `SPEC.md`, `TASKS.md`, `TEST_PLAN.md`, then `READY` | E |
-| 6 | `/feature T-…` or `/migration T-…` | Any developer | Code, tests, one pull request per task | F |
+| 3 | `/plan-next F-00` | Agent, you | Architecture ADR, then the Foundation document | C, D |
+| 4 | `/plan-next F-NN` | Agent, analyst, you | One reviewed feature document, then `READY` | D |
+| 5 | `/feature T-…` or `/migration T-…` | Any developer | Code, tests, one pull request per task | E |
 
-Each `/plan-next` run produces one step and stops.
+Each `/plan-next` run produces one decision and stops.
+
+### You decide from a one-page sheet
+
+For each approval, the agent shows a decision sheet: the open questions with a proposed answer, the assumptions and conflicts with a proposed resolution, split tasks, and unresolved risks. Answer "approve all" or decide item by item. The full feature document, about 300 lines at most, is there for the agents and for anyone who wants to read it; you are not expected to.
 
 ### Step 0: Prepare
 
@@ -54,7 +57,7 @@ The skeleton then goes in its own pull request. It is generated with the stack's
 
 Foundation tasks can proceed while feature requirements are being reviewed, since they do not depend on them.
 
-### Step 6: Implementation
+### Step 5: Implementation
 
 A task does not start unless its feature is `READY`. The agent implements only that task, stops if a gap appears, and stops with a proposed split if the task exceeds the size limit. It then updates the task status and prepares the pull request description, which maps each requirement to code and test, and points out what needs careful review. Commit, push, and pull request remain the developer's decision.
 
@@ -65,10 +68,9 @@ The agent that extracts does not review itself. `requirements-analyst` is read-o
 | When | Reviews | Main question |
 |---|---|---|
 | Before approval A | Feature inventory | Is anything missing, unnecessary, or badly divided? |
-| Before approval D | `REQUIREMENTS.md` | Is each requirement true, clear, complete, and testable? |
-| Before approval E | Whole feature package | Could a developer build this without asking anything? |
+| Before approval D | Feature document | Is each requirement true and testable, and could a developer build this without asking anything? |
 
-Findings are `UNSUPPORTED`, `MISSING`, `AMBIGUOUS`, `UNTESTABLE`, `CONTRADICTION`, or `SCOPE`, each `BLOCKER`, `MAJOR`, or `MINOR`. The Orchestrator applies what the sources can answer and turns the rest into questions. After two rounds, what remains goes to you with the report.
+Findings are `UNSUPPORTED`, `MISSING`, `AMBIGUOUS`, `UNTESTABLE`, `CONTRADICTION`, or `SCOPE`, each `BLOCKER`, `MAJOR`, or `MINOR`. The Orchestrator applies what the sources can answer and turns the rest into questions. A second round runs only if a `BLOCKER` remains. What is still open reaches you in the decision sheet.
 
 ### What Ready Means
 
@@ -98,7 +100,7 @@ The agent registers it, flags the requirements it contradicts, creates questions
 ├── decisions/
 │   └── ADR-001-target-architecture.md
 └── plan/
-    ├── README.md               status map: phases and features
+    ├── README.md               index of phases and features
     ├── sources.md              SRC-NN registry
     ├── questions.md            Q-NNN open and answered questions
     ├── roadmap.md              phases, dependencies, exit criteria, scope
@@ -106,10 +108,9 @@ The agent registers it, flags the requirements it contradicts, creates questions
     │   ├── sources/SRC-NN.md   one digest per non-code source
     │   ├── inventory.md        features F-NN
     │   ├── inventory-review.md analyst review of the inventory
-    │   ├── data-model.md       legacy tables, or proposed domain model
-    │   └── traceability.md     source to requirement to task matrix
+    │   └── data-model.md       legacy tables, or proposed domain model
     └── features/
-        ├── F-00-foundation/    README.md, TASKS.md, TEST_PLAN.md
-        └── F-03-order-entry/   README.md, REQUIREMENTS.md, REVIEW.md, SPEC.md,
-                                TASKS.md, TEST_PLAN.md
+        ├── F-00-foundation.md  tasks and test scenarios; the spec is the ADR
+        └── F-03-order-entry.md scope, requirements with scenarios, contracts,
+                                tasks, review, status
 ```

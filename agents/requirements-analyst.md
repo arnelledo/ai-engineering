@@ -36,8 +36,7 @@ Use them exactly as defined. Do not substitute alternative types, levels, or ver
 The Orchestrator tells you which of these applies:
 
 - **Inventory:** is any feature missing or unnecessary, and are features divided sensibly?
-- **Requirements:** is each requirement true, clear, complete, and testable?
-- **Feature package:** reading `REQUIREMENTS.md`, `SPEC.md`, `TASKS.md`, and `TEST_PLAN.md` together, is the Definition of Ready met?
+- **Feature document:** is each requirement true, clear, complete, and testable, do the contracts and tasks follow from it, and is the Definition of Ready met?
 
 ## Independence
 
@@ -61,7 +60,7 @@ Questions to add to `questions.md`, with the sources and features they affect.
 
 ### Definition of Ready
 
-For a feature package only: each item, and whether it holds.
+For a feature document only: each item, and whether it holds.
 
 ### Verdict
 
@@ -69,4 +68,4 @@ Provide exactly one verdict as defined in the Requirements Quality Standards.
 
 ### Proposed Document
 
-The content of the review as it should be recorded in `REVIEW.md` or `discovery/inventory-review.md`.
+For a feature document: the verdict and the open findings, one line each, as they should be recorded in its Review section. For the inventory: the content to record in `discovery/inventory-review.md`.

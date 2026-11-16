@@ -27,8 +27,7 @@ Use the Planner role.
 Propose:
 
 - `discovery/inventory.md`: features `F-NN`, starting at `F-01`, each with the sources that support it;
-- `discovery/data-model.md`: legacy tables and who reads or writes them, or a proposed domain model for new development;
-- `discovery/traceability.md`: sources to features.
+- `discovery/data-model.md`: legacy tables and who reads or writes them, or a proposed domain model for new development.
 
 Record what is unclear as `Q-NNN` in `questions.md`, with the sources and affected features.
 
@@ -36,7 +35,7 @@ For new development, walk each feature through the completeness checklist in the
 
 For modernization, also compare documentation with actual behavior. Each disagreement becomes a question.
 
-Record the Planner's output yourself. Create `.ai/plan/README.md` with the status of each feature.
+Record the Planner's output yourself. Create `.ai/plan/README.md` as an index of the features, without status.
 
 ## Phase 4 — Review the Inventory
 

@@ -74,7 +74,8 @@ A feature is ready for development only when all of these hold:
 - every requirement cites evidence, and the analyst verified it in the source;
 - no requirement remains `CONFLICT` or `ASSUMED` without a human decision;
 - every requirement has a human approval, with name and date;
-- every approved requirement has at least one testable acceptance criterion and a scenario in `TEST_PLAN.md`;
+- every approved requirement has at least one testable scenario;
+- the feature document is within its budget;
 - every task cites its requirements, and every approved requirement belongs to a task;
 - every split task states a valid reason, and every task is within the size limits;
 - no open question affects the feature;
@@ -86,5 +87,5 @@ A final test: could a developer who has seen only these documents implement the 
 
 Provide exactly one:
 
-- `READY`: no open `BLOCKER` or `MAJOR` finding. For the final package review, the whole Definition of Ready also holds, except for human approvals still pending.
+- `READY`: no open `BLOCKER` or `MAJOR` finding. For a feature document, the whole Definition of Ready also holds, except for human approvals still pending.
 - `NOT READY`: at least one `BLOCKER` or `MAJOR` finding remains open.

@@ -86,7 +86,7 @@ When asked to produce planning documents, apply the Project Planning Standards (
 
 Cite evidence for every claim. Mark what has none as `⚠️ ASSUMED` and propose a question; do not fill gaps with plausible requirements.
 
-Derive specs, tasks, and test plans only from `APPROVED` and `CHANGE` requirements, and place work according to the accepted ADRs.
+Write the complete feature document in one pass: requirements with their test scenarios, then contracts and tasks derived from them, placed according to the accepted ADRs. Where an open question shapes the contracts or tasks, write them for the proposed answer and say so. Stay within the document budget.
 
 Return the proposed document content. The Orchestrator records it.
 

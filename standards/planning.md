@@ -23,7 +23,7 @@ The plan lives under `.ai/plan/` in the application repository. `/plan-discover`
 
     .ai/decisions/ADR-NNN-short-description.md    accepted architecture decisions
     .ai/plan/
-      README.md                  status map: phases and features
+      README.md                  index: phases and links to feature documents, no status
       sources.md                 SRC-NN registry
       questions.md               Q-NNN open and answered questions
       roadmap.md                 phases, dependencies, exit criteria, scope
@@ -32,18 +32,37 @@ The plan lives under `.ai/plan/` in the application repository. `/plan-discover`
         inventory.md             features F-NN
         inventory-review.md      analyst review of the inventory
         data-model.md            legacy tables, or proposed domain model
-        traceability.md          source to requirement to task matrix
-      features/F-NN-short-name/
-        README.md                scope, sources, phase, status
-        REQUIREMENTS.md          REQ-NN-NNN
-        REVIEW.md                analyst findings and their resolution
-        SPEC.md                  target behavior and contracts
-        TASKS.md                 T-NN-NN
-        TEST_PLAN.md             TP-NN-NN
+      features/F-NN-short-name.md  one document per feature: see Feature Document
 
 All plan artifacts are written in English unless the project states otherwise.
 
 Reference source documents by ID and section. Do not copy them into the plan.
+
+Reference other plan items by ID. Do not repeat their content or keep counters, so nothing can go stale.
+
+## Feature Document
+
+Each feature is one document, `features/F-NN-short-name.md`. It is the only place that holds the feature's scope, requirements, test scenarios, contracts, tasks, review result, and status.
+
+    # F-03 · Order entry
+    Status: DRAFT | IN REVIEW | AWAITING DECISION | READY | DONE
+    Phase: P1 · Sources: SRC-01, SRC-03
+
+    ## Scope            what is in and out, in a few lines
+    ## Requirements     REQ-NN-NNN with evidence and scenarios
+    ## Contracts        only what the ADR and existing code do not already determine
+    ## Tasks            T-NN-NN
+    ## Review           analyst verdict and open findings, one line each
+
+### Budget
+
+Unless `.ai/project.md` defines another limit, a feature document stays within about 300 lines.
+
+The document is written for the agents that implement it. The human decides from the decision sheet, not by reading the document.
+
+Write contracts only where a developer would otherwise have to guess: error codes, payload shapes that cross a boundary, state transitions. Do not restate the ADR, the framework's behavior, or what the scenarios already say.
+
+When a feature does not fit the budget, stop and propose how to split the feature. Do not compress it until it fits.
 
 ## Identifiers
 
@@ -83,8 +102,11 @@ A claim without evidence is marked `⚠️ ASSUMED` and generates a question. Do
     ### REQ-03-004 · Credit limit check
     - Evidence: SRC-01 OrderEntry.bas:412-440; SRC-03 §5.2; Q-004
     - Coverage: CONFLICT → resolved by Q-004: per customer
-    - Acceptance: order rejected when open orders + new total exceed the customer limit
+    - TP-03-04: given a limit of 1,000 and open orders of 800, an order of 300 is rejected with CREDIT_LIMIT
+    - TP-03-05: given the same customer, an order of 200 is accepted
     - Approval: APPROVED (Jane Doe, 2026-03-14)
+
+Each requirement carries its own test scenarios. They are its acceptance criteria and the feature's test plan; there is no separate test plan document.
 
 ### Coverage
 
@@ -115,15 +137,26 @@ Stop at each approval. Do not continue until the human has decided.
 - **A** Inventory and discovery questions (`/plan-discover`)
 - **B** Roadmap and priorities (`/plan-roadmap`)
 - **C** Target architecture decision (`/plan-next F-00`)
-- **D** Requirements of a feature (`/plan-next F-NN`)
-- **E** `SPEC.md`, `TASKS.md`, and `TEST_PLAN.md` of a feature, one at a time (`/plan-next F-NN`)
-- **F** Commit, push, and pull request of each task (`/feature`, `/migration`)
+- **D** Feature document, decided through its decision sheet (`/plan-next F-NN`)
+- **E** Commit, push, and pull request of each task (`/feature`, `/migration`)
 
-Approval F follows Human Control: authorization for one task does not extend to the next.
+Approval E follows Human Control: authorization for one task does not extend to the next.
+
+### Decision Sheet
+
+The human approves decisions, not documents. Each approval is requested with a decision sheet of at most one page:
+
+- each open question, with the proposed answer and the evidence behind it;
+- each `ASSUMED`, `CONFLICT`, `CODE-ONLY`, or `DOC-ONLY` requirement, with the proposed resolution;
+- each split task and its reason;
+- risks the analyst could not resolve;
+- the path of the full document, for anyone who wants to read it.
+
+The human may answer "approve all", or decide items individually. Approving the sheet approves every `PROPOSED` requirement in the document with the stated resolutions. Record each decision in `questions.md` and each approval in the requirement, with the person's name and the date.
 
 ## Independent Review
 
-The agent that extracts does not review its own work. The Requirements Analyst reviews before approvals A, D, and E, as defined in the Requirements Quality Standards.
+The agent that extracts does not review its own work. The Requirements Analyst reviews the inventory before approval A, and each complete feature document once before approval D, as defined in the Requirements Quality Standards.
 
 The Orchestrator applies findings that the sources can answer and turns the rest into questions. After at most two review rounds, anything still open goes to the human with the report.
 
@@ -148,7 +181,7 @@ Do not edit an accepted ADR to change a decision. Create a new ADR that supersed
 - Deliver it in its own pull request, separate from the planning documents and from the first feature.
 - Pin dependency versions centrally when the stack supports it.
 
-`F-00` has no `REQUIREMENTS.md` or `SPEC.md`. Its specification is the ADR.
+The `F-00` document has no Requirements or Contracts section. Its specification is the ADR; its tasks list their test scenarios directly.
 
 ## Task Scope
 
@@ -182,9 +215,9 @@ When implementation exceeds a limit, stop and propose how to split the task. Do 
 
 ## Ready
 
-A feature is `READY` when the Definition of Ready in the Requirements Quality Standards is met and the human has approved its last document. Record the status in the feature's `README.md`.
+A feature is `READY` when the Definition of Ready in the Requirements Quality Standards is met and the human has approved its decision sheet. Record the status only in the feature document's `Status` line.
 
-For `F-00`, Ready means the ADR is accepted, `TASKS.md` and `TEST_PLAN.md` are approved, and no open question affects it.
+For `F-00`, Ready means the ADR is accepted, its document is approved, and no open question affects it.
 
 A task whose feature is not `READY` does not start.
 
@@ -192,9 +225,9 @@ Remove `READY` when a new source, an answer, or an approved change affects the f
 
 ## During Implementation
 
-- Read only what the task needs: the task, its requirements, `SPEC.md`, its test scenarios, and the accepted ADRs.
+- Read only what the task needs: its feature document and the accepted ADRs.
 - If a gap appears, stop and create a question. Do not assume.
-- Update the task's status in the same change as the code.
+- Update the task's status in the feature document in the same change as the code.
 - Name tests with the requirement they verify when the language allows it.
 
 Prepare the pull request description, then stop:

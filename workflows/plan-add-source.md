@@ -25,8 +25,8 @@ Use the Requirements Analyst to check the impact when it affects approved requir
 
 - Mark each contradicted requirement as needing re-verification, citing the source.
 - Add a question for each contradiction and each uncovered behavior.
-- Remove `READY` from each affected feature, and update `.ai/plan/README.md`.
-- Update `discovery/traceability.md`.
+- Remove `READY` from each affected feature document.
+- Add the source to the `Sources` line of each affected feature document.
 
 ## Phase 4 — Stop
 

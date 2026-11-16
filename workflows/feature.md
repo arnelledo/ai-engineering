@@ -4,7 +4,7 @@
 
 Apply this phase only when the request names a planned task (`T-NN-NN`). Otherwise, go to Phase 1.
 
-Read the task, its requirements, `SPEC.md`, its test scenarios, and the accepted ADRs under `.ai/decisions/`.
+Read the task's feature document and the accepted ADRs under `.ai/decisions/`.
 
 If its feature is not `READY`, stop and report what is missing. Do not implement.
 
@@ -78,4 +78,4 @@ Report:
 
 Do not declare completion with unresolved blocking failures.
 
-For a planned task, update its status in `TASKS.md` in the same change, prepare the pull request description defined in the Project Planning Standards, and stop.
+For a planned task, update its status in the feature document in the same change, prepare the pull request description defined in the Project Planning Standards, and stop.

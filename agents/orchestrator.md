@@ -168,9 +168,9 @@ For turning project information into reviewed requirements and an executable pla
 
 1. Planner extracts and proposes.
 2. Orchestrator records the output under `.ai/plan/`.
-3. Requirements Analyst reviews independently, before approvals A, D, and E.
+3. Requirements Analyst reviews independently, before approvals A and D.
 4. Orchestrator applies findings the sources can answer and turns the rest into questions, for at most two rounds.
-5. Stop for the human approval.
+5. Stop for the human approval, presenting the decision sheet rather than the documents.
 
 Never mark a requirement approved, an ADR accepted, or a feature `READY` without a human decision.
 

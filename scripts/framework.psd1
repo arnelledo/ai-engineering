@@ -103,7 +103,7 @@
         @{
             Name         = 'requirements-analyst'
             Description  = 'Critically reviews extracted features, requirements, and plans against their sources, as a software analyst and product owner.'
-            ArgumentHint = 'Name the inventory, requirements, or feature package to review'
+            ArgumentHint = 'Name the inventory or feature document to review'
             Tools        = @('read', 'search')
             Standards    = @('requirements-quality.md', 'planning.md')
         }
